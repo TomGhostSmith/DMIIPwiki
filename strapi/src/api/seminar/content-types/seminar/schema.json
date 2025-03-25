@@ -1,0 +1,17 @@
+{
+  "kind": "collectionType",
+  "collectionName": "seminars",
+  "info": {
+    "singularName": "seminar",
+    "pluralName": "seminars",
+    "displayName": "Seminar"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "content": {
+      "type": "richtext"
+    }
+  }
+}
