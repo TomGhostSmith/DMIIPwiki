@@ -12,6 +12,6 @@ footer: MIT Licensed | Copyright © 2025-present DMIIP Lab, Institute of Science
 ---
 
 
-[Go to Seminar Page](./seminar)
+[Go to Seminar Page](/wiki/seminar.html)
 
 end of the page!

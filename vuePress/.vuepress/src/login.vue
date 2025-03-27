@@ -29,7 +29,7 @@
     
     const login = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/login', {
+        const response = await fetch('http://10.138.42.155:9006/api/login', {
           method: 'POST',
           credentials: 'include',  // Important: Allows cookies to be sent
           headers: { 'Content-Type': 'application/json' },
@@ -37,13 +37,26 @@
         })
     
         if (response.ok) {
-        //   alert('Login successful!')
-          status.login(response.json().role)
-          router.push(redirectTo) // Redirect after login
+          // alert('Login successful!')
+          let resp = await response.json()
+          // console.log(resp);
+          // console.log(redirectTo);
+          // console.log(resp.role);
+          // console.log(resp["role"]);
+          status.login(resp.role)
+          if (redirectTo === "/")
+          {
+            router.push("/wiki/") // Redirect after login
+          }
+          else
+          {
+            router.push(redirectTo) // Redirect after login
+          }
         } else {
           errorMessage.value = "Invalid username or password"
         }
       } catch (error) {
+        console.log(error);
         errorMessage.value = "Error connecting to server"
       }
     }

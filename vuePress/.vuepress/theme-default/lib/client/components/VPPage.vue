@@ -20,8 +20,6 @@ defineSlots<{
   'content-bottom'?: (props: Record<never, never>) => VNode | VNode[] | null
 }>()
 
-const role = status.userRole
-
 const page = usePageData()
 const router = useRouter()
 const route = useRoute()
@@ -32,6 +30,7 @@ const privateEditable = page.value.frontmatter.modification === 'private'  // De
 
 
 onMounted(async () => {
+  const role = status.userRole
   console.log("page mounted");
   console.log(route.path);
   console.log(role);
@@ -41,6 +40,10 @@ onMounted(async () => {
     if (role === 'logout' && !publicVisible) {
         // alert('Session expired. Please login again.')
         router.push({ path: '/wiki/login', query: { redirect: route.path } })
+    }
+    else if (role === 'user' && !privateVisible)
+    {
+      router.push('/wiki/adminOnly')
     }
     else if (role !== 'logout' && route.path === '/wiki/login.html')
     {

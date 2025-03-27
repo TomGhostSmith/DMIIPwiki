@@ -10,7 +10,7 @@ export default defineUserConfig({
   description: 'Wiki for DMIIP Lab at ISTBI, Fudan University',
 
   theme: defaultTheme({
-    logo: './.vuepress/src/ISTBI.png',
+    logo: 'resources/ISTBI.png',
     home: '/wiki/',
     navbar: ['/wiki/', '/wiki/get-started'],
   }),
@@ -27,6 +27,7 @@ export default defineUserConfig({
   // layout: 'ayouts/LayoutHome.vue',
 
   bundler: viteBundler(),
+
 
   // chainWebpack(config) {
   //   // Custom Vue configuration to avoid custom element detection
