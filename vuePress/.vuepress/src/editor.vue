@@ -34,54 +34,44 @@ const redirectTo = route.query.redirect || '/'
 const attrs = ref({title: "", scope: "", modification: ""})
 
 const loadContent = async () => {
+    console.log("Loading content");
     // todo: modify this method to "GET"
     const module = await import("@toast-ui/editor");
     Editor = module.Editor;
     try
     {
-        const response = await fetch('http://localhost:5000/api/loadContent', {
+        const response = await fetch('/api/loadContent', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json'},
             body: JSON.stringify({ fileName: file.value})
         })
 
+        
         if (response.ok)
         {
-            
-
             let a = await response.json()
             let c = a.content || ""
+            // console.log(c);
+            
             attrs.value = a.attrs
 
             nextTick(() => {
-        if (!editorInstance.value)
-        {
-            editorInstance.value = new Editor({
-                el: document.getElementById("editor"),
-                height: "600px",
-                initialEditType: "wysiwyg", // or "wysiwyg"
-                // initialEditType: "markdown", // or "wysiwyg"
-                previewStyle: "vertical", // "tab" or "vertical"
-                initialValue: c,
-                // initialValue: content,
-            });
-        }
-    })
-            // console.log(a.content);
-            // setTimeout(() => {
-            //     if (editorInstance.value)
-            //     {
-            //         editorInstance.value.reset()
-            //         editorInstance.value.setMarkdown(c)
-            //     }
-            //     else
-            //     {
-            //         console.log("editor instance not initialized");
-                    
-            //     }
-            // }, 1000);
-            // content.value = a.content
+                if (editorInstance.value)
+                {
+                    editorInstance.value.destroy()
+                    editorInstance.value = null;
+                }
+                editorInstance.value = new Editor({
+                    el: document.getElementById("editor"),
+                    height: "600px",
+                    initialEditType: "wysiwyg", // or "wysiwyg"
+                    // initialEditType: "markdown", // or "wysiwyg"
+                    previewStyle: "vertical", // "tab" or "vertical"
+                    initialValue: c,
+                    // initialValue: content,
+                });
+            })
             
         }
         else
@@ -101,7 +91,7 @@ const saveContent = async() => {
         console.log({ fileName: file.value, 
             "content": editorInstance.value.getMarkdown(),
         "attrs": attrs.value});
-        const response = await fetch('http://localhost:5000/api/saveContent', {
+        const response = await fetch('/api/saveContent', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json'},
@@ -113,8 +103,10 @@ const saveContent = async() => {
 
         if (response.ok)
         {
-            alert("saved")
             router.push(redirectTo)
+            setTimeout(() => {
+                location.reload(); // Force reload after the page navigation
+            }, 100); 
         }
         else
         {
@@ -141,6 +133,8 @@ onBeforeUnmount(() => {
     }
 })
 
+let Editor
+
 onMounted(() => {
     mounted.value = true
     console.log(redirectTo);
@@ -152,6 +146,8 @@ onMounted(() => {
     fileName = "." + fileName
     file.value = fileName
     console.log(fileName);
+
+    
 
 
     // nextTick(() => {

@@ -15,13 +15,13 @@ export default defineClientConfig({
     const pinia = createPinia();
     app.use(ElementPlus)  // ✅ Enable Element Plus globally
     if (typeof window !== "undefined") {
-      alert("using persisted state");
+      // alert("using persisted state");
       
       pinia.use(piniaPluginPersistedstate);
     }
     else
     {
-      alert("using temperal state");
+      // alert("using temperal state");
     }
     app.use(pinia)
     app.component("login", login)

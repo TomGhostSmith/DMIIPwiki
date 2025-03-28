@@ -91,7 +91,7 @@ onMounted(async () => {
   console.log(status.userRole);
   
     try {
-      const response = await fetch('http://10.138.42.155:9006/api/check-auth', {
+      const response = await fetch('/api/check-auth', {
         credentials: 'include'
       })
       const data = await response.json()
@@ -109,7 +109,7 @@ const login = async () => {
 }
 
 const logout = async () => {
-  await fetch('http://10.138.42.155:9006/api/logout', { method: 'POST', credentials: 'include' })
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' })
   // alert('Logged out successfully.')
   status.logout()
   router.push('/wiki/login')

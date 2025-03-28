@@ -29,7 +29,7 @@
     
     const login = async () => {
       try {
-        const response = await fetch('http://10.138.42.155:9006/api/login', {
+        const response = await fetch('/api/login', {
           method: 'POST',
           credentials: 'include',  // Important: Allows cookies to be sent
           headers: { 'Content-Type': 'application/json' },
