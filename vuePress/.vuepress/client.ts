@@ -3,7 +3,7 @@ import ElementPlus from 'element-plus'
 import { createPinia } from "pinia";
 import 'element-plus/dist/index.css'
 import login from "./src/login.vue"
-import content_editor from "./src/content-editor.vue"
+import editor from "./src/editor.vue"
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 // import { el } from 'element-plus/es/locales.mjs';
 
@@ -25,6 +25,6 @@ export default defineClientConfig({
     }
     app.use(pinia)
     app.component("login", login)
-    app.component("content-editor", content_editor)
+    app.component("editor", editor)
   }
 })

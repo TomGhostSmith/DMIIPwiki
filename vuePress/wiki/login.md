@@ -1,10 +1,9 @@
 ---
-title: Login
-scope: public
 modification: admin
+scope: public
+title: 登录
 ---
-# Authentication is required to view private pages
+# 需要登录
 
-Welcome! Please log in to continue.
-
+您正在访问课题组内部页面，请登录
 <login/>

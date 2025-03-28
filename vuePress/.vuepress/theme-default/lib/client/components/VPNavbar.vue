@@ -114,6 +114,10 @@ const logout = async () => {
   status.logout()
   router.push('/wiki/login')
 }
+
+const edit = async () => {
+  router.push({ path: '/wiki/editor', query: { redirect: route.path } })
+}
 </script>
 
 <template>
@@ -132,7 +136,7 @@ const logout = async () => {
       <SearchBox />
       <el-button v-if="status.userRole === 'logout'" type="text" @click="login">Login</el-button>
       <el-button v-if="status.userRole !== 'logout'" type="text" @click="logout">Logout</el-button>
-
+      <el-button type="text" @click="edit">edit</el-button>
     </div>
   </header>
 </template>
