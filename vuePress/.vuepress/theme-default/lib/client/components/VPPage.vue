@@ -2,12 +2,10 @@
 import VPPageMeta from '@theme/VPPageMeta.vue'
 import VPPageNav from '@theme/VPPageNav.vue'
 import type { VNode } from 'vue'
-import { onMounted, inject, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { Content} from 'vuepress/client'
 import { usePageData, useRouter, useRoute } from 'vuepress/client'
 import { userStatus } from "../../../../globalStatus.js"
-import { stat } from 'fs'
-
 
 const status = userStatus()
 
@@ -27,13 +25,23 @@ const route = useRoute()
 const publicVisible = page.value.frontmatter.scope === 'public'  // Default to false
 const privateVisible = page.value.frontmatter.scope !== 'admin'  // Default to true
 const privateEditable = page.value.frontmatter.modification === 'private'  // Default to false
+const adminEditable = page.value.frontmatter.modification === 'admin' || page.value.frontmatter.modification === 'private'  // Default to false
 
+const editable = (status.userRole === "admin" && adminEditable) || (status.userRole === "user" && privateEditable)
+const isVisitor = status.userRole === "logout"
 
-onMounted(async () => {
+const lastModify = page.value.frontmatter.lastModify + ", " + page.value.frontmatter.lastModifyDate
+
+const showFooter = ref(false)
+onBeforeMount(async () => {
   const role = status.userRole
   console.log("page mounted");
   console.log(route.path);
   console.log(role);
+
+  console.log(showFooter);
+  console.log(route.path);
+  showFooter.value = (route.path !== '/wiki/login.html' && route.path !== '/wiki/editor.html' && route.path !== '/wiki/adminOnly.html')
   
   
   try{
@@ -55,18 +63,20 @@ onMounted(async () => {
   }
 })
 
-
+const edit = async () => {
+  router.push({ path: '/wiki/editor', query: { redirect: route.path, create: "false" } })
+}
 </script>
 
 <template>
   <main class="vp-page">
     <slot name="top" />
 
-    <p v-if="publicVisible">public</p>
+    <!-- <p v-if="publicVisible">public</p>
       <p v-if="!publicVisible && privateVisible">private</p>
       <p v-if="!privateVisible">admin</p>
       <p v-if="privateEditable">|private</p>
-      <p v-if="!privateEditable">|admin</p>
+      <p v-if="!privateEditable">|admin</p> -->
 
     <div vp-content>
       <slot name="content-top" />
@@ -76,7 +86,12 @@ onMounted(async () => {
       <slot name="content-bottom" />
     </div>
 
-    <VPPageMeta />
+    <!-- <VPPageMeta /> -->
+    <div class="vp-footer" vp-footer v-if="showFooter">
+      <span v-if="!isVisitor">最后编辑：{{ lastModify }}</span>
+      <el-button v-if="editable" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
+      <p>MIT Licensed | Copyright © 2025-present DMIIP Lab, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University</p>
+    </div>
 
     <VPPageNav />
 

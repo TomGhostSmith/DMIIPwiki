@@ -28,16 +28,18 @@ import { ref } from "vue";
 
 export const userStatus = defineStore("user", () => {
   const userRole = ref("logout");
+  const userName = ref("")
 
-  const login = (role) => {
+  const login = (name, role) => {
     userRole.value = role
+    userName.value = name
   };
 
   const logout = () => {
     userRole.value = "logout"
   };
 
-  return { userRole, login, logout };
+  return { userRole, userName, login, logout };
 }, {
   persist: true
 });

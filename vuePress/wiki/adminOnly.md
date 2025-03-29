@@ -1,9 +1,9 @@
 ---
-title: unauthorized
+title: 没有权限
 scope: private
 modification: admin
 ---
 
-# This page is for admin only
+# 该页面仅管理员可访问
 
-[Go back home](/wiki/)
+[返回首页](/wiki/)

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { useData } from '@theme/useData'
-import { computed } from 'vue'
-import { RouteLink } from 'vuepress/client'
+import { computed, onMounted, ref } from 'vue'
+import { RouteLink, useRoute, useRouter } from 'vuepress/client'
+
+import { userStatus } from "../../../../globalStatus.js"
+
+const status = userStatus()
 
 const { routeLocale, themeLocale } = useData()
 
@@ -12,6 +16,19 @@ const getMsg = (): string =>
 
 const homeLink = computed(() => themeLocale.value.home ?? routeLocale.value)
 const homeText = computed(() => themeLocale.value.backToHome ?? 'Back to home')
+
+const isAdmin = ref(false)
+
+const router = useRouter()
+const route = useRoute()
+
+onMounted(() => {
+    isAdmin.value = (status.userRole === "admin")
+})
+
+const edit = async () => {
+  router.push({ path: '/wiki/editor', query: { redirect: route.path, create: "true" } })
+}
 </script>
 
 <template>
@@ -22,7 +39,9 @@ const homeText = computed(() => themeLocale.value.backToHome ?? 'Back to home')
 
         <blockquote>{{ getMsg() }}</blockquote>
 
-        <RouteLink :to="homeLink">{{ homeText }}</RouteLink>
+        <RouteLink :to="homeLink">{{ homeText }}</RouteLink> 
+        <br>
+        <el-button type="primary" v-if="isAdmin" @click="edit" style="margin-top: 20px;">创建该页面</el-button>
       </div>
     </main>
   </div>

@@ -87,7 +87,6 @@ const route = useRoute()
 
 
 onMounted(async () => {
-  console.log("nav bar mounted")
   console.log(status.userRole);
   
     try {
@@ -96,7 +95,7 @@ onMounted(async () => {
       })
       const data = await response.json()
       
-      status.login(data.role)
+      status.login(data.user, data.role)
     } catch {
     // alert('Error checking authentication. Please login again.')
     router.push({ path: '/wiki/login', query: { redirect: route.path } })
@@ -107,17 +106,12 @@ onMounted(async () => {
 const login = async () => {
     router.push('/wiki/login')
 }
-
-const logout = async () => {
-  await fetch('/api/logout', { method: 'POST', credentials: 'include' })
-  // alert('Logged out successfully.')
-  status.logout()
-  router.push('/wiki/login')
+  
+const profile = async() => {
+  router.push('/wiki/profile')
 }
 
-const edit = async () => {
-  router.push({ path: '/wiki/editor', query: { redirect: route.path } })
-}
+
 </script>
 
 <template>
@@ -132,11 +126,12 @@ const edit = async () => {
       <slot name="before" />
       <VPNavbarItems class="vp-hide-mobile" />
       <slot name="after" />
+      <el-button v-if="status.userRole === 'logout'" type="text" @click="login" style="margin-left: 10px;margin-top: 2px;">登录</el-button>
+      <!-- <el-button v-if="status.userRole !== 'logout'" type="text" @click="logout">Logout</el-button> -->
+      <el-button v-if="status.userRole !== 'logout'" type="text" @click="profile" style="margin-left: 10px;margin-top: 2px;">{{ status.userName }}</el-button>
       <VPToggleColorModeButton v-if="themeLocale.colorModeSwitch" />
       <SearchBox />
-      <el-button v-if="status.userRole === 'logout'" type="text" @click="login">Login</el-button>
-      <el-button v-if="status.userRole !== 'logout'" type="text" @click="logout">Logout</el-button>
-      <el-button type="text" @click="edit">edit</el-button>
+      <!-- <el-button type="text" @click="edit">edit</el-button> -->
     </div>
   </header>
 </template>

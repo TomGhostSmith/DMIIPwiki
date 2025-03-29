@@ -43,7 +43,7 @@
           // console.log(redirectTo);
           // console.log(resp.role);
           // console.log(resp["role"]);
-          status.login(resp.role)
+          status.login(resp.user, resp.role)
           if (redirectTo === "/")
           {
             router.push("/wiki/") // Redirect after login

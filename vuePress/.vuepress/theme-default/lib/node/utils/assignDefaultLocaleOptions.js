@@ -24,7 +24,7 @@ export const DEFAULT_LOCALE_OPTIONS = {
         `That's a Four-Oh-Four.`,
         `Looks like we've got some broken links.`,
     ],
-    backToHome: 'Take me home',
+    backToHome: '返回首页',
     // a11y
     openInNewWindow: 'open in new window',
     toggleColorMode: 'toggle color mode',

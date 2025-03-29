@@ -1,6 +1,6 @@
 ---
-title: editor
-scope: public
+title: 编辑页面
+scope: private
 modification: admin
 ---
 <div>

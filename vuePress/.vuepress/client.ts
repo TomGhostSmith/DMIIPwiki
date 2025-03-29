@@ -4,7 +4,9 @@ import { createPinia } from "pinia";
 import 'element-plus/dist/index.css'
 import login from "./src/login.vue"
 import editor from "./src/editor.vue"
+import profile from "./src/profile.vue"
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
+import { ElMessage } from 'element-plus'
 // import { el } from 'element-plus/es/locales.mjs';
 
 
@@ -26,5 +28,9 @@ export default defineClientConfig({
     app.use(pinia)
     app.component("login", login)
     app.component("editor", editor)
+    app.component("profile", profile)
+    app.config.globalProperties.$message = ElMessage;
+
+    
   }
 })

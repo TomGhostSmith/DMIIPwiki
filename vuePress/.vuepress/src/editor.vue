@@ -1,5 +1,32 @@
 <template>
-    <span>Title:</span>
+    <h2>页面属性</h2>
+    <el-form :model="attrs" label-width="auto" style="max-width: 600px;">
+        <el-form-item label="页面地址">
+            <el-input :readonly="true" v-model="redirectTo"/>
+        </el-form-item>
+        <el-form-item label="页面标题">
+            <el-input :disabled="!isAdmin" v-model="attrs.title"/>
+        </el-form-item>
+        <el-form-item label="谁可以阅读">
+            <el-radio-group :disabled="!isAdmin" v-model="attrs.scope">
+                <el-radio value="public">所有人</el-radio>
+                <el-radio value="private">仅课题组成员</el-radio>
+                <el-radio value="admin">仅管理员</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form-item label="谁可以编辑">
+            <el-radio-group :disabled="!isAdmin" v-model="attrs.modification">
+                <el-radio value="private">所有课题组成员</el-radio>
+                <el-radio value="admin">仅管理员</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <hr>
+        <!-- <el-form-item label="最后修改">
+            <el-input :readonly="true" v-model=""/>
+        </el-form-item> -->
+    </el-form>
+    <p>最后修改：{{ attrs.lastModify }} {{ attrs.lastModifyDate }}</p>
+    <!-- <span>Title:</span>
     <el-input style="display: inline;margin-left: 10px;" v-model="attrs.title"/>
     <br>
     <span>Visible:</span>
@@ -8,22 +35,22 @@
     
     <span>Editable:</span>
     <el-input style="display: inline;margin-left: 10px;" v-model="attrs.modification"/>
-    <br>
-
+    <br> -->
+    <h2>正文</h2>
     <div id="editor" style="margin-top: 20px"></div>
-    <el-button type="primary" style="margin-top: 20px;" @click="saveContent">Save</el-button>
-    <el-button style="margin-top: 20px; margin-left: 20px;" @click="cancel">Cancel</el-button>
+    <el-button type="primary" :loading="isSaving" style="margin-top: 20px;" @click="saveContent">保存</el-button>
+    <el-button :loading="isSaving" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消</el-button>
 </template>
 <script setup>
-import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
-// import { Editor } from '@toast-ui/editor'
-// import Editor from '@toast-ui/editor'
+import { ref, onMounted, nextTick, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vuepress/client'
 import '@toast-ui/editor/dist/toastui-editor.css'
-// import EditorJS from '@editorjs/editorjs'
-// import Header from '@editorjs/header'
-// import List from '@editorjs/list'
-// import Image from '@editorjs/image'
+
+import { userStatus } from "../globalStatus.js"
+
+const { proxy } = getCurrentInstance();
+
+const status = userStatus()
 
 const mounted = ref(false)
 const editorInstance = ref(null)
@@ -31,32 +58,56 @@ const route = useRoute()
 const router = useRouter()
 const file = ref("")
 const redirectTo = route.query.redirect || '/'
-const attrs = ref({title: "", scope: "", modification: ""})
+const newPage = route.query.create === "true"
+const attrs = ref({url: "", title: "", scope: "", modification: ""})
+const isSaving = ref(false)
 
 const loadContent = async () => {
     console.log("Loading content");
     // todo: modify this method to "GET"
     const module = await import("@toast-ui/editor");
     Editor = module.Editor;
-    try
+    let c
+    if (newPage)
     {
-        const response = await fetch('/api/loadContent', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json'},
-            body: JSON.stringify({ fileName: file.value})
-        })
-
-        
-        if (response.ok)
+        c = ""
+        let terms = file.value.split("/")
+        let titleName = terms[terms.length - 1]
+        console.log(titleName);
+        attrs.value = {title: titleName.substring(0, titleName.length - 3), scope: "private", modification: "admin", md5: "", lastModify: "", lastModifyDate: ""}
+    }
+    else
+    {
+        try
         {
-            let a = await response.json()
-            let c = a.content || ""
-            // console.log(c);
+            const response = await fetch('/api/loadContent', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify({ fileName: file.value})
+            })
+    
             
-            attrs.value = a.attrs
+            if (response.ok)
+            {
+                let a = await response.json()
+                c = a.content || ""
+                attrs.value = a.attrs
+            }
+            else
+            {
+                console.log(response);
+                alert("failed to get content")
+                router.push(redirectTo)
+            }
+        } catch (error)
+        {
+            console.log(error);
+            router.push(redirectTo)
+        }
+    }
 
-            nextTick(() => {
+    nextTick(() => {
                 if (editorInstance.value)
                 {
                     editorInstance.value.destroy()
@@ -72,22 +123,25 @@ const loadContent = async () => {
                     // initialValue: content,
                 });
             })
-            
-        }
-        else
-        {
-            console.log(response);
-            
-            alert("failed to get content")
-        }
-    } catch (error)
-    {
-        console.log(error);
-    }
 }
 
 const saveContent = async() => {
+
+    const now = new Date();
+    
+    // Get YYYY-MM-DD HH-mm
+    const datePart = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const timePart = now.toTimeString().split(' ')[0].slice(0, 5); // HH-mm
+
+    // Get timezone abbreviation
+    const timeZone = Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+        .formatToParts(now)
+        .find(part => part.type === 'timeZoneName').value;
+
+    isSaving.value = true
     try {
+        attrs.value.lastModify = status.userName
+        attrs.value.lastModifyDate = `${datePart} ${timePart} ${timeZone}`
         console.log({ fileName: file.value, 
             "content": editorInstance.value.getMarkdown(),
         "attrs": attrs.value});
@@ -103,22 +157,28 @@ const saveContent = async() => {
 
         if (response.ok)
         {
+            proxy.$message.success('保存成功')
             router.push(redirectTo)
             setTimeout(() => {
                 location.reload(); // Force reload after the page navigation
-            }, 100); 
+            }, 300); 
+        }
+        else if (response.status == 409)
+        {
+            proxy.$message.error('页面已被他人修改，请复制修改内容并刷新页面')
         }
         else
         {
             console.log(response);
-            
-            alert("failed to get content")
+            proxy.$message.error('未知错误')
         }
     } catch (error)
     {
         console.log(error);
+        proxy.$message.error('未知错误')
         
     }
+    isSaving.value = false
 }
 
 const cancel = () => {
@@ -134,10 +194,12 @@ onBeforeUnmount(() => {
 })
 
 let Editor
+const isAdmin = ref(false)
 
 onMounted(() => {
     mounted.value = true
     console.log(redirectTo);
+    isAdmin.value = (status.userRole === "admin")
     let fileName = redirectTo.replace(".html", ".md")
     if (fileName.charAt(redirectTo.length - 1) == "/")
     {
