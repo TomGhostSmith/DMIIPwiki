@@ -29,6 +29,9 @@
   "dependencies": {
     "@editorjs/editorjs": "^2.30.8",
     "@toast-ui/editor": "^3.2.2",
+    "bcrypt": "^5.1.1",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
     "element-plus": "^2.9.7",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.2.0",

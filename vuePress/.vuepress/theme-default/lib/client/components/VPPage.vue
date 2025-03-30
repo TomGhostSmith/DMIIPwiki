@@ -41,7 +41,11 @@ onBeforeMount(async () => {
 
   console.log(showFooter);
   console.log(route.path);
-  showFooter.value = (route.path !== '/wiki/login.html' && route.path !== '/wiki/editor.html' && route.path !== '/wiki/adminOnly.html')
+  showFooter.value = (route.path !== '/wiki/login.html' 
+  && route.path !== '/wiki/profile.html' 
+  && route.path !== '/wiki/editor.html' 
+  && route.path !== '/wiki/userManage.html' 
+  && route.path !== '/wiki/adminOnly.html')
   
   
   try{

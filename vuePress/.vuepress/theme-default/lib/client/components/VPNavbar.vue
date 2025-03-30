@@ -111,6 +111,10 @@ const profile = async() => {
   router.push('/wiki/profile')
 }
 
+const manage = async() => {
+  router.push('/wiki/userManage')
+}
+
 
 </script>
 
@@ -129,6 +133,7 @@ const profile = async() => {
       <el-button v-if="status.userRole === 'logout'" type="text" @click="login" style="margin-left: 10px;margin-top: 2px;">登录</el-button>
       <!-- <el-button v-if="status.userRole !== 'logout'" type="text" @click="logout">Logout</el-button> -->
       <el-button v-if="status.userRole !== 'logout'" type="text" @click="profile" style="margin-left: 10px;margin-top: 2px;">{{ status.userName }}</el-button>
+      <el-button v-if="status.userRole === 'admin'" type="text" @click="manage" style="margin-left: 10px;margin-top: 2px;">用户管理</el-button>
       <VPToggleColorModeButton v-if="themeLocale.colorModeSwitch" />
       <SearchBox />
       <!-- <el-button type="text" @click="edit">edit</el-button> -->

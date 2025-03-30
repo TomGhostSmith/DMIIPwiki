@@ -3,17 +3,12 @@ from flask_cors import CORS
 import time
 import os
 import hashlib
+from database import Database
 
+db = Database("wiki.db")
 app = Flask(__name__)
 # CORS(app, supports_credentials=True, origins=["http://10.138.42.155"])  # Allow frontend to send cookies
 CORS(app, supports_credentials=True)  # Allow frontend to send cookies
-
-# Define a simple username & password (For a real app, use a database!)
-USER_CREDENTIALS = {
-    "admin": "123",
-    "tom": "123"
-}
-admins = {"admin"}
 
 def sendEmail(receive, subject, content):
     import smtplib
@@ -48,26 +43,28 @@ def calculate_md5(file_path):
             md5_hash.update(chunk)
     return md5_hash.hexdigest()
 
-def getUserRole(name):
-    if name in admins:
-        return "admin"
-    elif name in USER_CREDENTIALS:
-        return "user"
-    else:
-        return "logout"
-
 # Token expiration time (1 hour)
 EXPIRATION_TIME = 3600  # seconds
+
+@app.route('/getNance', methods=['POST'])
+def getNance():
+    data = request.json
+    username = data.get("username")
+    salt = db.getRegister(username)
+    if salt is not None:
+        nance = db.getNance()
+        return jsonify({"salt": salt, "nance": nance})
+    else:
+        return jsonify({"salt": None, "nance": None}), 401
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-
-    # Check credentials
-    if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-        role = getUserRole(username)
+    nance = data.get("nance")
+    if db.checkUser(username, password, nance):
+        role = db.getRole(username)
         response = make_response(jsonify({"user": username, "role": role}))
         response.set_cookie("user_name", username, httponly=True, max_age=EXPIRATION_TIME)
         return response
@@ -77,7 +74,7 @@ def login():
 @app.route('/check-auth', methods=['GET'])
 def check_auth():
     userName = request.cookies.get("user_name")
-    role = getUserRole(userName)
+    role = db.getRole(userName)
     if role == 'admin' or role == 'user':
         return jsonify({"user": userName, "role": role})
     return jsonify({"user": "", "role": 'logout'}), 401
@@ -105,7 +102,7 @@ def getContent():
                 elif stage == 1:
                     if (line.strip()):
                         key = line[:line.find(":")].strip()
-                        value = line[line.find(":")+1 : ].strip()
+                        value = line[line.find(":") + 1 : ].strip()
                         attrs[key] = value
                 # elif stage == 2:
                 #     if (line.strip()):
@@ -146,15 +143,40 @@ def saveContent():
         os.system("bash build.sh")
     return jsonify({"resp": "ok"})
 
+@app.route("/getAllUser", methods=["GET"])
+def getAllUser():
+    userName = request.cookies.get("user_name")
+    role = db.getRole(userName)
+    if role != "admin":
+        return jsonify([]), 401
+    return jsonify({"data": db.getAllUser()})
+
+@app.route('/addUser', methods=['POST'])
+def addUser():
+    if db.getRole(request.cookies.get("user_name")) != "admin":
+        return jsonify({'error': 'unauthorized'}), 401
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    role = data.get("role")
+    email = data.get("email")
+    if (email is None or email == ""):
+        email = "N/A"
+    register = data.get("register")
+    if (not db.checkUserName(username)):
+        return jsonify({'error': 'username exists'}), 400
+    db.addUser(username, password, role, register, email)
+    return jsonify({})
+
+
 @app.route('/getUserInfo', methods=["GET"])
 def getUserInfo():
     userName = request.cookies.get("user_name")
-    role = getUserRole(userName)
-    if role == 'logout':
+    user = db.getUser(userName)
+    if user is None:
         return jsonify({"user": "", "role": 'logout'}), 401
     else:
-        # todo: load user info
-        return jsonify({"user": userName, "role": role, "registerDate": "2025.3.29", "email": "N/A"})
+        return jsonify({"user": userName, "role": user[0], "registerDate": user[1], "email": user[2]})
 
 if __name__ == '__main__':
     # app.run(host="0.0.0.0", port=9006, ssl_context=('/Data/GhoST/ssl.crt', '/Data/GhoST/ssl.key'))
