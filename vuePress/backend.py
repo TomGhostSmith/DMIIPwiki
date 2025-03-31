@@ -3,6 +3,8 @@ from flask_cors import CORS
 import time
 import os
 import hashlib
+import shutil
+
 from database import Database
 
 db = Database("wiki.db")
@@ -19,8 +21,8 @@ def sendEmail(receive, subject, content):
     password = 'CYkaC37sRSGnGKwG'
     sender = "fdudmiip@163.com"
 
-    # msg = MIMEText(content,'html','utf-8')
-    msg = MIMEText(content,'plain','utf-8')
+    msg = MIMEText(content,'html','utf-8')
+    # msg = MIMEText(content,'plain','utf-8')
     msg["Subject"] = Header(subject,'utf-8')
     msg['From'] = sender
     if (isinstance(receive, list)):
@@ -44,12 +46,14 @@ def calculate_md5(file_path):
     return md5_hash.hexdigest()
 
 # Token expiration time (1 hour)
-EXPIRATION_TIME = 3600  # seconds
+# EXPIRATION_TIME = 3600  # seconds
+EXPIRATION_TIME = 600  # seconds
 
 @app.route('/getNance', methods=['POST'])
 def getNance():
     data = request.json
     username = data.get("username")
+    print(username)
     salt = db.getRegister(username)
     if salt is not None:
         nance = db.getNance()
@@ -63,11 +67,15 @@ def login():
     username = data.get("username")
     password = data.get("password")
     nance = data.get("nance")
-    if db.checkUser(username, password, nance):
+    if (db.checkUser(username, password, nance)):
         role = db.getRole(username)
         response = make_response(jsonify({"user": username, "role": role}))
         response.set_cookie("user_name", username, httponly=True, max_age=EXPIRATION_TIME)
-        return response
+        user = db.getUser(username)
+        if (user[2] == ""):
+            return response, 302
+        else:
+            return response
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 
@@ -76,7 +84,9 @@ def check_auth():
     userName = request.cookies.get("user_name")
     role = db.getRole(userName)
     if role == 'admin' or role == 'user':
-        return jsonify({"user": userName, "role": role})
+        response = make_response(jsonify({"user": userName, "role": role}))
+        response.set_cookie("user_name", userName, httponly=True, max_age=EXPIRATION_TIME)
+        return response
     return jsonify({"user": "", "role": 'logout'}), 401
 
 @app.route('/logout', methods=['POST'])
@@ -90,47 +100,85 @@ def getContent():
     data = request.json
     fileName = data.get("fileName")
     if (os.path.exists(fileName)):
-        attrs = dict()
-        h = calculate_md5(fileName)
-        attrs['md5'] = h
-        stage = 0
-        with open(fileName, encoding='utf-8') as fp:
-            content = ""
-            for line in fp.readlines():
-                if line.strip() == "---":
-                    stage += 1
-                elif stage == 1:
-                    if (line.strip()):
-                        key = line[:line.find(":")].strip()
-                        value = line[line.find(":") + 1 : ].strip()
-                        attrs[key] = value
-                # elif stage == 2:
-                #     if (line.strip()):
-                #         stage += 1
-                #         if (not line.startswith("# ")):
-                #             content += line
-                else:
-                    content += line
-        return jsonify({"content": content, "attrs": attrs, "md5": ""})
+        attrs, content = getMarkdownContent(fileName)
+        return jsonify({"content": content, "attrs": attrs})
     else: 
-        return jsonify({"content": "", "attrs": attrs, "md5": ""})
+        return jsonify({"content": "", "attrs": {}}), 404
         # return jsonify({"error": "file not exists"}), 404
-    
+
+def getMarkdownContent(fileName):
+    attrs = dict()
+    h = calculate_md5(fileName)
+    attrs['md5'] = h
+    stage = 0
+    with open(fileName, encoding='utf-8') as fp:
+        content = ""
+        for line in fp.readlines():
+            if line.strip() == "---":
+                stage += 1
+            elif stage == 1:
+                if (line.strip()):
+                    key = line[:line.find(":")].strip()
+                    value = line[line.find(":") + 1 : ].strip()
+                    attrs[key] = value
+            # elif stage == 2:
+            #     if (line.strip()):
+            #         stage += 1
+            #         if (not line.startswith("# ")):
+            #             content += line
+            else:
+                content += line
+    return attrs, content
+
+def getHistoryFolder(originFileName):
+    return f"./history/{originFileName}".replace(".md", "")
+
+def getHistoryFileName(modifyDate):
+    return f"{modifyDate.replace(' ', "_").replace(':', ";").replace("+", ",")}.md"
+
+def extractModifyDate(fileName):
+    return fileName.replace(".md", "").replace("_", " ").replace(";", ":").replace(",", "+")
+
+def extractMarkdownHeader(fileName):
+    attrs = dict()
+    stage = 0
+    with open(fileName, encoding='utf-8') as fp:
+        for line in fp.readlines():
+            if line.strip() == "---":
+                stage += 1
+            elif stage == 1:
+                if (line.strip()):
+                    key = line[:line.find(":")].strip()
+                    value = line[line.find(":") + 1 : ].strip()
+                    attrs[key] = value
+            else:
+                break
+    return attrs
+
 @app.route('/saveContent', methods=["POST"])
 def saveContent():
     data = request.json
     fileName = data.get("fileName")
     content = data.get("content")
     attrs = data.get("attrs")
+
+    # move origin file to history folder
+
     if (os.path.exists(fileName)):
+        historyFolder = getHistoryFolder(fileName)
+        os.makedirs(historyFolder, exist_ok=True)
         md5 = attrs.get("md5")
         h = calculate_md5(fileName)
         if md5 != h:
             return jsonify({"resp": "modified"}), 409
+        oldAttrs = extractMarkdownHeader(fileName)
+        historyName = f"{historyFolder}/{getHistoryFileName(oldAttrs["lastModifyDate"])}"
+        shutil.copy(fileName, historyName)
+        db.moveFile(fileName, oldAttrs["lastModifyDate"], historyName)
 
     baseFolder = os.path.dirname(fileName)
     os.makedirs(baseFolder, exist_ok=True)
-
+    # write to new file
     with open(fileName, 'wt', encoding='utf-8') as fp:
         fp.write("---\n")
         for key, value in attrs.items():
@@ -140,6 +188,7 @@ def saveContent():
         fp.write("---\n")
         # fp.write(f"# {attrs["title"]}\n")
         fp.write(content)
+        db.updateFile(fileName, attrs["lastModifyDate"], attrs["lastModify"])
         os.system("bash build.sh")
     return jsonify({"resp": "ok"})
 
@@ -154,7 +203,7 @@ def getAllUser():
 @app.route('/addUser', methods=['POST'])
 def addUser():
     if db.getRole(request.cookies.get("user_name")) != "admin":
-        return jsonify({'error': 'unauthorized'}), 401
+        return jsonify({"error": "没有权限"}), 401
     data = request.json
     username = data.get("username")
     password = data.get("password")
@@ -162,21 +211,140 @@ def addUser():
     email = data.get("email")
     if (email is None or email == ""):
         email = "N/A"
-    register = data.get("register")
-    if (not db.checkUserName(username)):
-        return jsonify({'error': 'username exists'}), 400
-    db.addUser(username, password, role, register, email)
+    resp = db.addUser(username, role, email)
+    if (not resp):
+        return jsonify({'error': '用户名已存在'}), 400
+    return jsonify({})
+
+@app.route('/modifyUser', methods=["PUT"])
+def modifyUser():
+    if db.getRole(request.cookies.get("user_name")) != "admin":
+        return jsonify({"error": "没有权限"}), 401
+    data = request.json
+    username = data.get("username")
+    role = data.get("role")
+    email = data.get("email")
+    if (email is None or email == ""):
+        email = "N/A"
+    if (db.checkUserName(username)):
+        return jsonify({'error': '不存在该用户'}), 400
+    db.updateUser(username, role, email)
     return jsonify({})
 
 
-@app.route('/getUserInfo', methods=["GET"])
+@app.route('/getUserInfo', methods=["POST"])
 def getUserInfo():
-    userName = request.cookies.get("user_name")
+    cookieUserName = request.cookies.get("user_name")
+    data = request.json
+    userName = data.get('username')
+    if (cookieUserName != "admin" and cookieUserName != userName):
+        return jsonify({"error": "没有权限"}), 401
     user = db.getUser(userName)
     if user is None:
-        return jsonify({"user": "", "role": 'logout'}), 401
+        return jsonify({"error": "没有权限"}), 401
     else:
         return jsonify({"user": userName, "role": user[0], "registerDate": user[1], "email": user[2]})
+
+@app.route('/deleteUser', methods=['POST'])
+def deleteUser():
+    cookieUserName = request.cookies.get("user_name")
+    data = request.json
+    userName = data.get('username')
+    if (cookieUserName != "admin"):
+        return jsonify({"error": "没有权限"}), 401
+    resp = db.deleteUser(userName)
+    if (not resp):
+        return jsonify({"error": "不存在该用户"}), 404
+    else:
+        return jsonify({})
+    
+@app.route('/resetPasswd', methods=['PUT'])
+def resetPasswd():
+    cookieUserName = request.cookies.get("user_name")
+    data = request.json
+    userName = data.get('username')
+    if (cookieUserName != "admin"):
+        return jsonify({"error": "没有权限"}), 401
+    resp = db.resetPassword(userName)
+    if (not resp):
+        return jsonify({"error": "不存在该用户"}), 404
+    else:
+        return jsonify({})
+    
+@app.route('/modifyPasswd', methods=['PUT'])
+def modifyPasswd():
+    cookieUserName = request.cookies.get("user_name")
+    data = request.json
+    userName = data.get('username')
+    oldPasswd = data.get('oldPasswd')
+    passwd = data.get('passwd')
+    nance = data.get('nance')
+    if (cookieUserName != userName):
+        return jsonify({"error": "没有权限"}), 401
+    if not db.checkUser(userName, oldPasswd, nance):
+        return jsonify({"error": "旧密码错误"}), 400
+    resp = db.modifyPassword(userName, passwd)
+    if (not resp):
+        return jsonify({"user": "", "role": 'logout'}), 404
+    else:
+        return jsonify({})
+
+@app.route('/getHistory', methods=['POST'])
+def getHistory():
+    data = request.json
+    fileName = data.get('file')
+    histories = db.getFileHistory(fileName)
+    currentVersion = db.getCurrentVersion(fileName)
+    return jsonify({"data": list(reversed(histories)), "currentVersion": currentVersion})
+
+@app.route('/getHistoryFile', methods=["POST"])
+def getHistoryFile():
+    data = request.json
+    fileName = data.get('file')
+    modifyDate = data.get('time')
+    filePath = db.getFilePath(fileName, modifyDate)
+    attrs, content = getMarkdownContent(filePath)
+    return jsonify({"content": content, "attrs": attrs})
+
+@app.route('/forgetPass', methods=["POST"])
+def forgetPass():
+    data = request.json
+    username = data.get('username')
+    email = data.get('email')
+    user = db.getUser(username)
+    if (user is None or user[2]!= email or email == ""):
+        return jsonify({"error": "用户名或邮箱错误"}), 404
+    
+    code = db.getCode()
+    emailText = f'<p>尊敬的 DMIIP wiki 用户您好：</p>' + \
+    "<p>我们收到了您发起的密码重置请求，以下是您本次操作所需的验证码：</p><br>" + \
+    f"<h1>{code}</h1><br>" + \
+    "<p>请注意：</p>" + \
+    "<p>1. 本验证码有效期为10分钟</p>" + \
+    "<p>2. 请在密码重置页面输入此验证码继续后续操作</p>" + \
+    "<p>3. 如非本人操作，请忽略本邮件</p><br><hr><br>" + \
+    "<p>安全提示：我们的工作人员不会通过任何方式向您索要验证码，请注意保护账户信息安全。</p><br>" + \
+    "<p>如有疑问，请联系邮箱：fdudmiip@163.com</p>" + \
+    "<p>感谢您对DMIIP wiki的支持</p><br>" + \
+    "<p>DMIIP wiki 开发组 敬上</p>"
+    # print(emailText)
+    sendEmail([email], "【DMIIP wiki】密码重置验证码", emailText)
+    return jsonify({})
+
+@app.route('/modifyPasswdFromEmail', methods=['PUT'])
+def modifyPasswdFromEmail():
+    data = request.json
+    userName = data.get('username')
+    passwd = data.get('passwd')
+    code = data.get('code')
+    if not db.checkCode(code):
+        return jsonify({"error": "验证码错误"}), 400
+    resp = db.modifyPassword(userName, passwd)
+    if (not resp):
+        return jsonify({"user": "", "role": 'logout'}), 404
+    else:
+        return jsonify({})
+
 
 if __name__ == '__main__':
     # app.run(host="0.0.0.0", port=9006, ssl_context=('/Data/GhoST/ssl.crt', '/Data/GhoST/ssl.key'))

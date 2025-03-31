@@ -1,2 +1,5 @@
 dist
 *.db
+__pycache__
+wiki
+history

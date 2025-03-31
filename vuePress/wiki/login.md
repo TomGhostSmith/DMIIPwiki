@@ -2,6 +2,7 @@
 modification: admin
 scope: public
 title: 登录
+foot: false
 ---
 # 需要登录
 

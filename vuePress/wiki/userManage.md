@@ -2,6 +2,7 @@
 title: 用户管理
 scope: admin
 modification: admin
+foot: false
 ---
 ## 添加用户
 <add-user/>

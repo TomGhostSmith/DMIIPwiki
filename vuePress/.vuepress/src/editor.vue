@@ -62,6 +62,9 @@ const newPage = route.query.create === "true"
 const attrs = ref({url: "", title: "", scope: "", modification: ""})
 const isSaving = ref(false)
 
+let Editor
+const isAdmin = ref(false)
+
 const loadContent = async () => {
     console.log("Loading content");
     // todo: modify this method to "GET"
@@ -131,7 +134,7 @@ const saveContent = async() => {
     
     // Get YYYY-MM-DD HH-mm
     const datePart = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const timePart = now.toTimeString().split(' ')[0].slice(0, 5); // HH-mm
+    const timePart = now.toTimeString().split(' ')[0]; // HH-mm
 
     // Get timezone abbreviation
     const timeZone = Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
@@ -139,6 +142,8 @@ const saveContent = async() => {
         .find(part => part.type === 'timeZoneName').value;
 
     isSaving.value = true
+    console.log(editorInstance.value.getMarkdown())
+    console.log(attrs.value)
     try {
         attrs.value.lastModify = status.userName
         attrs.value.lastModifyDate = `${datePart} ${timePart} ${timeZone}`
@@ -192,9 +197,6 @@ onBeforeUnmount(() => {
         editorInstance.value = null;
     }
 })
-
-let Editor
-const isAdmin = ref(false)
 
 onMounted(() => {
     mounted.value = true

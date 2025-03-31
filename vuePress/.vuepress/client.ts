@@ -8,7 +8,11 @@ import profile from "./src/profile.vue"
 import userList from "./src/userList.vue"
 import addUser from "./src/addUser.vue"
 import approveUser from "./src/approveUser.vue"
+import changePass from "./src/changePass.vue"
+import forgetPass from "./src/forgetPass.vue"
+import userOperation from "./src/userOperation.vue"
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
+import historyList from "./src/historyList.vue"
 import { ElMessage } from 'element-plus'
 // import { el } from 'element-plus/es/locales.mjs';
 
@@ -35,6 +39,10 @@ export default defineClientConfig({
     app.component("user-list", userList)
     app.component("add-user", addUser)
     app.component("approve-user", approveUser)
+    app.component("change-pass", changePass)
+    app.component("forget-pass", forgetPass)
+    app.component("user-operation", userOperation)
+    app.component("history", historyList)
     app.config.globalProperties.$message = ElMessage;
 
     

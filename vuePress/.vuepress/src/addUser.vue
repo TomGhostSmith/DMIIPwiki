@@ -12,9 +12,6 @@
         <el-form-item label="邮箱">
             <el-input v-model="form.email"/>
         </el-form-item>
-        <el-form-item label="密码">
-            <el-input v-model="form.passwd" />
-        </el-form-item>
         
     </el-form>
     <el-button type="primary" style="margin-top: 10px;" @click="addUser">添加用户</el-button>
@@ -41,17 +38,10 @@ const addUser = async () => {
     console.log(register);
     console.log(form);
     
-    let saltedPassword = CryptoJS.PBKDF2(form.value.passwd, register, {
-            keySize: 64/4,
-            iterations: 10,
-            hasher: CryptoJS.algo.SHA256
-    })
     let response = await fetch('/api/addUser', { method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             username: form.value.name,
-            password: saltedPassword.toString(CryptoJS.enc.Hex), 
-            register: register,
             email: form.value.email,
             role: form.value.group
         })
@@ -61,6 +51,7 @@ const addUser = async () => {
     {
         proxy.$message.success('添加成功')
         form.value = {}
+        location.reload()
     }
     else
     {

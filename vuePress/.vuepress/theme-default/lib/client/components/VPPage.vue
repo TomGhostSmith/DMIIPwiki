@@ -32,7 +32,7 @@ const isVisitor = status.userRole === "logout"
 
 const lastModify = page.value.frontmatter.lastModify + ", " + page.value.frontmatter.lastModifyDate
 
-const showFooter = ref(false)
+const showFooter = page.value.frontmatter.foot != false
 onBeforeMount(async () => {
   const role = status.userRole
   console.log("page mounted");
@@ -41,11 +41,6 @@ onBeforeMount(async () => {
 
   console.log(showFooter);
   console.log(route.path);
-  showFooter.value = (route.path !== '/wiki/login.html' 
-  && route.path !== '/wiki/profile.html' 
-  && route.path !== '/wiki/editor.html' 
-  && route.path !== '/wiki/userManage.html' 
-  && route.path !== '/wiki/adminOnly.html')
   
   
   try{
@@ -70,6 +65,10 @@ onBeforeMount(async () => {
 const edit = async () => {
   router.push({ path: '/wiki/editor', query: { redirect: route.path, create: "false" } })
 }
+
+const history = async () => {
+  router.push({ path: '/wiki/history', query: { redirect: route.path} })
+}
 </script>
 
 <template>
@@ -85,6 +84,7 @@ const edit = async () => {
     <div vp-content>
       <slot name="content-top" />
 
+      <h1>{{ page.frontmatter.title }}</h1>
       <Content />
 
       <slot name="content-bottom" />
@@ -94,6 +94,7 @@ const edit = async () => {
     <div class="vp-footer" vp-footer v-if="showFooter">
       <span v-if="!isVisitor">最后编辑：{{ lastModify }}</span>
       <el-button v-if="editable" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
+      <el-button v-if="!isVisitor" type="text" @click="history" style="display: inline; margin-left: 20px;margin-bottom: 5px;">查看历史</el-button>
       <p>MIT Licensed | Copyright © 2025-present DMIIP Lab, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University</p>
     </div>
 

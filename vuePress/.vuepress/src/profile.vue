@@ -4,7 +4,7 @@
             <el-input :readonly="true" v-model="form.name"/>
         </el-form-item>
         <el-form-item label="用户组">
-            <el-radio-group :disabled="true" v-model="form.group">
+            <el-radio-group :disabled="!canModifyRole" v-model="form.group" @change="modify">
                 <el-radio value="user">普通用户</el-radio>
                 <el-radio value="admin">管理员</el-radio>
             </el-radio-group>
@@ -14,38 +14,73 @@
             <el-input :readonly="true" v-model="form.registerDate"/>
         </el-form-item>
         <el-form-item label="邮箱">
-            <el-input :readonly="true" v-model="form.email" /><el-button @click="changeEmail" type="primary" style="margin-top: 10px;display: inline;">修改邮箱</el-button>
+            <el-input v-model="form.email" @change="modify"/>
+            <!-- <el-button @click="changeEmail" type="primary" style="margin-top: 10px;display: inline;">修改邮箱</el-button> -->
         </el-form-item>
-        <el-form-item label="初始密码">
+        <!-- <el-form-item label="密码">
             <el-button @click="changePassword" type="primary">修改密码</el-button>
-        </el-form-item>
+        </el-form-item> -->
         
     </el-form>
-    <el-button type="danger" style="margin-top: 20px;" @click="logout">退出登录</el-button>
-    <!-- <el-button style="margin-top: 20px; margin-left: 20px;" @click="cancel">Cancel</el-button> -->
+    <el-button :disabled="!modified" type="primary" style="margin-top: 20px;" @click="save">保存修改</el-button>
+    <el-button :disabled="!modified" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消修改</el-button>
 </template>
 <script setup>
-import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { ref, onMounted, nextTick, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vuepress/client'
 import { userStatus } from "../globalStatus.js"
 
+const { proxy } = getCurrentInstance();
+
 const form = ref({})
+const route = useRoute()
 const router = useRouter()
 const status = userStatus()
+const username = ref("")
 
-const logout = async () => {
-  await fetch('/api/logout', { method: 'POST', credentials: 'include' })
-  // alert('Logged out successfully.')
-  status.logout()
-  router.push('/wiki/login')
+const canModifyRole = ref(false)
+const modified = ref(false)
+
+const modify = () => {
+    console.log("modified");
+    modified.value = true
 }
 
-onMounted(async () => {
+const cancel = () => {
+    loadUserInfo()
+}
+
+const save = async() => {
+    let response = await fetch('/api/modifyUser', { method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            username: form.value.name,
+            email: form.value.email,
+            role: form.value.group
+        })
+
+    })
+    if (response.ok)
+    {
+        proxy.$message.success('修改成功')
+        loadUserInfo()
+    }
+    else
+    {
+        let data = await response.json()
+        proxy.$message.error('修改失败: ' + data.error)
+    }
+}
+
+const loadUserInfo = async () => {
+
     try
     {
         const response = await fetch('/api/getUserInfo', {
-          method: 'GET',
+          method: 'POST',
           credentials: 'include',  // Important: Allows cookies to be sent
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username.value})
         })
 
         if (response.ok)
@@ -60,11 +95,33 @@ onMounted(async () => {
         }
         else
         {
-            console.log("Failed to fetch user info");
+            let resp = await response.json()
+            proxy.$message.error(resp.error)
         }
-
+        
     }catch (error) {
-        console.log(error);
+        proxy.$message.error("未知错误")
     }
+    modified.value = false
+
+}
+
+onMounted(async () => {
+    if (route.path === "/wiki/profile.html")
+    {
+        username.value = status.userName
+        console.log("use cookie name");
+        
+    }
+    else
+    {
+        username.value = route.query.user
+        console.log("use name from router");
+    }
+
+    canModifyRole.value = (status.userName === "admin" && username.value !== "admin")
+
+    loadUserInfo()
+    
 })
 </script>

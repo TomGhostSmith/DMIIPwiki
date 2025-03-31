@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h2>Login</h2>
+        <h2>登录</h2>
         <p v-if="errorMessage" style="color:red;">{{ errorMessage }}</p>
         <el-input v-model="username" placeholder="Username" />
         <br>
@@ -8,13 +8,14 @@
         <el-input v-model="password" type="password" placeholder="Password" show-password />
         <br>
         <br>
-        <el-button type='primary' @click="login">登录</el-button>
+        <el-button type='primary' @click="login">登录</el-button> 
+        <el-button type="text" @click="forgetPass">忘记密码？</el-button>
     </div>
 </template>
     
 <script setup>
     import { useRoute, useRouter } from 'vuepress/client'
-    import { ref } from 'vue'
+    import { getCurrentInstance, ref } from 'vue'
     import CryptoJS from 'crypto-js';
     import { userStatus } from "../globalStatus.js"
     // import bcrypt from 'bcrypt'
@@ -27,6 +28,12 @@
     const username = ref('')
     const password = ref('')
     const errorMessage = ref('')
+
+    const { proxy } = getCurrentInstance()
+
+    const forgetPass = () => {
+      router.push("/wiki/forgetPass")
+    }
     
     
     const login = async () => {
@@ -66,6 +73,8 @@
           })
       
           if (response.ok) {
+            console.log(response.status);
+            
             // alert('Login successful!')
             let resp = await response.json()
             // console.log(resp);
@@ -81,15 +90,19 @@
             {
               router.push(redirectTo) // Redirect after login
             }
+            proxy.$message.success("登录成功")
+          } else if (response.status === 302){
+            proxy.$message.success("登录成功，请完善邮箱信息以便找回密码")
+            router.push("/wiki/profile.html")
           } else {
-            errorMessage.value = "Invalid username or password"
+            errorMessage.value = "用户名或密码错误"
           }
         } else {
-          errorMessage.value = "Invalid username or password"
+          errorMessage.value = "用户名或密码错误"
         }
       } catch (error) {
         console.log(error);
-        errorMessage.value = "Error connecting to server"
+        errorMessage.value = "无法连接到服务器"
       }
     }
 </script>
