@@ -37,6 +37,7 @@
     <el-input style="display: inline;margin-left: 10px;" v-model="attrs.modification"/>
     <br> -->
     <h2>正文</h2>
+    <el-button type="primary" @click="showFiles"  style="margin-top: 20px">插入文件</el-button>
     <div id="editor" style="margin-top: 20px"></div>
     <el-button type="primary" :loading="isSaving" style="margin-top: 20px;" @click="saveContent">保存</el-button>
     <el-button :loading="isSaving" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消</el-button>
