@@ -49,7 +49,7 @@ onMounted(async () => {
     file.value = fileName
     try
     {
-        const response = await fetch('/api/getHistory', {
+        const response = await fetch('/api/getPageHistory', {
           method: 'POST',
           credentials: 'include',  // Important: Allows cookies to be sent
           headers: { 'Content-Type': 'application/json' },
@@ -91,7 +91,7 @@ const loadContent = async () => {
     let c
     try
     {
-        const response = await fetch('/api/getHistoryFile', {
+        const response = await fetch('/api/getHistoryPage', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json'},

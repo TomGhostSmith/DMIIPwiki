@@ -5,6 +5,7 @@ import 'element-plus/dist/index.css'
 import login from "./src/login.vue"
 import editor from "./src/editor.vue"
 import profile from "./src/profile.vue"
+import file from "./src/file.vue"
 import userList from "./src/userList.vue"
 import addUser from "./src/addUser.vue"
 import approveUser from "./src/approveUser.vue"
@@ -13,6 +14,7 @@ import forgetPass from "./src/forgetPass.vue"
 import userOperation from "./src/userOperation.vue"
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import historyList from "./src/historyList.vue"
+import fileList from "./src/fileList.vue"
 import { ElMessage } from 'element-plus'
 // import { el } from 'element-plus/es/locales.mjs';
 
@@ -36,6 +38,7 @@ export default defineClientConfig({
     app.component("login", login)
     app.component("editor", editor)
     app.component("profile", profile)
+    app.component("file", file)
     app.component("user-list", userList)
     app.component("add-user", addUser)
     app.component("approve-user", approveUser)
@@ -43,6 +46,7 @@ export default defineClientConfig({
     app.component("forget-pass", forgetPass)
     app.component("user-operation", userOperation)
     app.component("history", historyList)
+    app.component("file-list", fileList)
     app.config.globalProperties.$message = ElMessage;
 
     

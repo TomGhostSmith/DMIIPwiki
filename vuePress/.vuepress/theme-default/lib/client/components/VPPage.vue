@@ -91,10 +91,10 @@ const history = async () => {
     </div>
 
     <!-- <VPPageMeta /> -->
-    <div class="vp-footer" vp-footer v-if="showFooter">
-      <span v-if="!isVisitor">最后编辑：{{ lastModify }}</span>
-      <el-button v-if="editable" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
-      <el-button v-if="!isVisitor" type="text" @click="history" style="display: inline; margin-left: 20px;margin-bottom: 5px;">查看历史</el-button>
+    <div class="vp-footer" vp-footer>
+      <span v-if="!isVisitor && showFooter">最后编辑：{{ lastModify }}</span>
+      <el-button v-if="editable && showFooter" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
+      <el-button v-if="!isVisitor && showFooter" type="text" @click="history" style="display: inline; margin-left: 20px;margin-bottom: 5px;">查看历史</el-button>
       <p>MIT Licensed | Copyright © 2025-present DMIIP Lab, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University</p>
     </div>
 

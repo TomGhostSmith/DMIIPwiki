@@ -149,7 +149,8 @@ const HomeHeroImage: FunctionalComponent = () => {
 }
 
 .vp-hero-action-button {
-  display: inline-block;
+  // display: inline-block;
+  display: block;
 
   box-sizing: border-box;
   padding: 0.8rem 1.6rem;
@@ -170,6 +171,15 @@ const HomeHeroImage: FunctionalComponent = () => {
 
   &:hover {
     color: var(--vp-c-accent-text);
+  }
+
+  &.plain {
+    color: var(--vp-c-accent-bg);
+    
+    &:hover {
+      color: var(--vp-c-accent-hover);
+      border-color: var(--vp-c-accent-hover);
+    }
   }
 
   &.primary {

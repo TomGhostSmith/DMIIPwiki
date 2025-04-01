@@ -47,6 +47,7 @@ onMounted(async () => {
 })
 
 const sendEmail = async () => {
+    waitSend.value = true
     try
     {
         const response = await fetch('/api/forgetPass', {
@@ -69,7 +70,6 @@ const sendEmail = async () => {
             proxy.$message.success('已发送邮件，请注意查收')
             sent.value = true
             let countdown = 60
-            waitSend.value = true
             let timer = setInterval(() => {
                 countdown --;
                 if (countdown > 0)
@@ -87,10 +87,12 @@ const sendEmail = async () => {
         } else {
             let resp = await response.json()
             proxy.$message.error(resp.error)
+            waitSend.value = false
         }
     }
     catch (error) {
         console.log(error)
+        waitSend.value = false
     }
 }
 

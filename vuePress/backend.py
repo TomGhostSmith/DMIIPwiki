@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_file
 from flask_cors import CORS
 import time
 import os
 import hashlib
 import shutil
+from datetime import datetime
 
 from database import Database
 
@@ -46,8 +47,8 @@ def calculate_md5(file_path):
     return md5_hash.hexdigest()
 
 # Token expiration time (1 hour)
-# EXPIRATION_TIME = 3600  # seconds
-EXPIRATION_TIME = 600  # seconds
+EXPIRATION_TIME = 3600 * 7 * 24  # seconds
+# EXPIRATION_TIME = 600  # seconds
 
 @app.route('/getNance', methods=['POST'])
 def getNance():
@@ -174,7 +175,7 @@ def saveContent():
         oldAttrs = extractMarkdownHeader(fileName)
         historyName = f"{historyFolder}/{getHistoryFileName(oldAttrs["lastModifyDate"])}"
         shutil.copy(fileName, historyName)
-        db.moveFile(fileName, oldAttrs["lastModifyDate"], historyName)
+        db.movePage(fileName, oldAttrs["lastModifyDate"], historyName)
 
     baseFolder = os.path.dirname(fileName)
     os.makedirs(baseFolder, exist_ok=True)
@@ -188,7 +189,7 @@ def saveContent():
         fp.write("---\n")
         # fp.write(f"# {attrs["title"]}\n")
         fp.write(content)
-        db.updateFile(fileName, attrs["lastModifyDate"], attrs["lastModify"])
+        db.updatePage(fileName, attrs["lastModifyDate"], attrs["lastModify"])
         os.system("bash build.sh")
     return jsonify({"resp": "ok"})
 
@@ -289,20 +290,20 @@ def modifyPasswd():
     else:
         return jsonify({})
 
-@app.route('/getHistory', methods=['POST'])
+@app.route('/getPageHistory', methods=['POST'])
 def getHistory():
     data = request.json
     fileName = data.get('file')
-    histories = db.getFileHistory(fileName)
-    currentVersion = db.getCurrentVersion(fileName)
+    histories = db.getPageHistory(fileName)
+    currentVersion = db.getPageCurrentVersion(fileName)
     return jsonify({"data": list(reversed(histories)), "currentVersion": currentVersion})
 
-@app.route('/getHistoryFile', methods=["POST"])
-def getHistoryFile():
+@app.route('/getHistoryPage', methods=["POST"])
+def getHistoryPage():
     data = request.json
     fileName = data.get('file')
     modifyDate = data.get('time')
-    filePath = db.getFilePath(fileName, modifyDate)
+    filePath = db.getPagePath(fileName, modifyDate)
     attrs, content = getMarkdownContent(filePath)
     return jsonify({"content": content, "attrs": attrs})
 
@@ -344,6 +345,135 @@ def modifyPasswdFromEmail():
         return jsonify({"user": "", "role": 'logout'}), 404
     else:
         return jsonify({})
+    
+def getLocalPath(fileName, uploadDate):
+    baseFolder = "./upload"
+    return f"{baseFolder}/{fileName}-{uploadDate}"
+
+def receiveFile():
+    thisTime = datetime.now()
+    uploadDate = thisTime.strftime('%Y-%m-%d %H:%M:%S')
+    fileDate = thisTime.strftime('%Y%m%d%H%M%S')
+    if 'file' not in request.files:
+        return None
+    # files = request.files.getlist('files')
+    file = request.files["file"]
+    fileName = file.filename
+    filePath = getLocalPath(fileName, fileDate)
+    file.save(filePath)
+    md5 = calculate_md5(filePath)
+    fileSize = os.path.getsize(filePath)
+    return fileName, filePath, md5, fileSize, uploadDate
+
+def getUploadDate(uploadDate, localFilePath=None):
+    # fileName = os.path.basename(localFilePath)
+    # uploadDate = fileName[fileName.rfind("-") + 1:]
+    # return uploadDate
+    return uploadDate.replace("-", "").replace(":", "").replace(' ', "")
+
+
+
+# netdisk part
+@app.route('/uploadFile', methods=["POST"])
+def uploadFile():
+    cookieUserName = request.cookies.get("user_name")
+    username = request.form.get('user')
+    scope = request.form.get('scope')
+    # print(f"{cookieUserName}, {username}")
+    if (cookieUserName != username):
+        return jsonify({"error": "没有权限"}), 401
+    resp = receiveFile()
+    if (not resp):
+        return jsonify({"error": "未知错误"}), 400
+    fileName, filePath, md5, fileSize, uploadDate = resp
+    id = db.uploadFile(fileName, uploadDate, username, fileSize, md5, filePath, scope)
+    return jsonify({"id": id})
+
+@app.route('/reUploadFile', methods=["PUT"])
+def reUploadFile():
+    cookieUserName = request.cookies.get("user_name")
+    scope = request.form.get('scope')
+    id = int(request.form.get('id'))
+    file = db.getFileByID(id)
+    if (file is None):
+        return jsonify({"error": "文件不存在"}), 404
+    if (cookieUserName != file["uploadUser"]):
+        return jsonify({"error": "没有权限"}), 401
+    fileName, filePath, md5, fileSize, uploadDate = receiveFile()
+    db.reUploadFile(id, fileName, uploadDate, fileSize, md5, filePath, scope)
+    os.remove(file["localPath"])
+    return jsonify({})
+
+@app.route('/getLabFiles', methods=["GET"])
+def getPublicFiles():
+    cookieUserName = request.cookies.get("user_name")
+    role = db.getRole(cookieUserName)
+    if (role == "logout"):
+        return jsonify({"error": "没有权限"}), 401
+    files = db.getLabFiles()
+    return jsonify({"data": files})
+
+@app.route("/deleteFile/<file_id>", methods=["DELETE"])
+def  deleteFile(file_id):
+    id = int(file_id)
+    file = db.getFileByID(id)
+    cookieUserName = request.cookies.get("user_name")
+    if (file is None):
+        return jsonify({"error": "文件不存在"}), 404
+    if (cookieUserName != file["uploadUser"]):
+        return jsonify({"error": "没有权限"}), 401
+    if (os.path.exists(file["localPath"])):
+        os.remove(file["localPath"])
+    db.deleteFile(id)
+    return jsonify({})
+
+@app.route('/updateFileMeta', methods=["PUT"])
+def updateFileMeta():
+    cookieUserName = request.cookies.get("user_name")
+    data = request.json
+    id = int(data.get('id'))
+    fileName = data.get('fileName')
+    scope = data.get('scope')
+    file = db.getFileByID(id)
+    if (file is None):
+        return jsonify({"error": "文件不存在"}), 404
+    if (cookieUserName != file["uploadUser"]):
+        return jsonify({"error": "没有权限"}), 401
+    uploadDate = getUploadDate(file["uploadDate"])
+    newLocalPath = getLocalPath(fileName, uploadDate)
+    if (newLocalPath != file["localPath"]):
+        shutil.move(file["localPath"], newLocalPath)
+    db.updateFileMeta(id, fileName, newLocalPath, scope)
+    return jsonify({})
+
+@app.route('/getFileInfo', methods=["POST"])
+def getFileInfo():
+    cookieUserName = request.cookies.get("user_name")
+    data = request.json
+    id = int(data.get('id'))
+    file = db.getFileByID(id)
+    if (file is None):
+        return jsonify({"error": "文件不存在"}), 404
+    if (cookieUserName != file["uploadUser"] and file["scope"] == "private"):
+        return jsonify({"error": "没有权限"}), 401
+    if (cookieUserName is None and file["scope"] == "lab"):
+        return jsonify({"error": "没有权限"}), 401
+    return jsonify({"file": file})
+    
+@app.route('/downloadFile/<file_id>', methods=["GET"])
+def downloadFile(file_id):
+    id = int(file_id)
+    cookieUserName = request.cookies.get("user_name")
+    file = db.getFileByID(id)
+    if file is None:
+        return jsonify({"error": "文件不存在"}), 404
+    if (cookieUserName != file["uploadUser"] and file["scope"] == "private"):
+        return jsonify({"error": "没有权限"}), 401
+    if (cookieUserName is None and file["scope"] == "lab"):
+        return jsonify({"error": "没有权限"}), 401
+    
+    return send_file(file["localPath"], as_attachment=True, download_name=file["fileName"])
+
 
 
 if __name__ == '__main__':

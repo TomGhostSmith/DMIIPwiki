@@ -27,6 +27,19 @@ class Database():
                        )
                        '''
         self.exec(sql)
+        sql = '''
+                       CREATE TABLE IF NOT EXISTS files (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        filename TEXT NOT NULL,
+                        uploaddate TEXT NOT NULL,
+                        uploaduser TEXT NOT NULL,
+                        filesize TEXT NOT NULL,
+                        md5 TEXT NOT NULL,
+                        localpath TEXT NOT NULL,
+                        scope TEXT NOT NULL
+                       )
+                       '''
+        self.exec(sql)
         if (self.getRegister('admin') is None):
             email = "fdudmiip@163.com"
             self.addUser("admin", "admin", email)
@@ -43,6 +56,8 @@ class Database():
                 result = cursor.fetchone()
             elif (getResult == "all"):
                 result = cursor.fetchall()
+            elif (getResult == "last"):
+                result = cursor.lastrowid
             conn.commit()
         except Exception as e:
             print(e)
@@ -170,7 +185,7 @@ class Database():
         self.exec("UPDATE users SET passwd = ? WHERE username = ?", (hashedSaltedPasswd, username))
         return True
     
-    def getFileHistory(self, fileName):
+    def getPageHistory(self, fileName):
         results = self.exec("SELECT modifyuser, modifydate FROM docs WHERE filename = ?", (fileName, ), "all")
         if results is None:
             results = list()
@@ -182,26 +197,79 @@ class Database():
             })
         return res
 
-    def getFilePath(self, fileName, modifyDate):
+    def getPagePath(self, fileName, modifyDate):
         result = self.exec("SELECT filepath FROM docs WHERE filename = ? AND modifydate = ?", (fileName, modifyDate), "one")
         if result is None:
             return None
         return result[0]
 
-    def moveFile(self, fileName, modifyDate, fileNewPath):
+    def movePage(self, fileName, modifyDate, fileNewPath):
         if (not self.getFilePath(fileName, modifyDate)):
             return False
         self.exec("UPDATE docs SET filepath = ? WHERE filename = ? AND modifydate = ?", (fileNewPath, fileName, modifyDate))
         return True
 
-    def updateFile(self, fileName, modifyDate, modifyUser):
+    def updatePage(self, fileName, modifyDate, modifyUser):
         if (self.getFilePath(fileName, modifyDate)):
             return False
         self.exec("INSERT INTO docs (filename, modifydate, modifyuser, filepath) VALUES (?, ?, ?, ?)", (fileName, modifyDate, modifyUser, fileName))
         return True
     
-    def getCurrentVersion(self, fileName):
+    def getPageCurrentVersion(self, fileName):
         result = self.exec("SELECT modifydate FROM docs WHERE filename = ? AND filepath = ?", (fileName, fileName), "one")
         if result is None:
             return None
         return result[0]
+    
+    def uploadFile(self, fileName, uploadDate, user, fileSize, md5, localPath, scope):
+        id = self.exec("INSERT INTO files (filename, uploaddate, uploaduser, filesize, md5, localpath, scope) VALUES (?, ?, ?, ?, ?, ?, ?)", (fileName, uploadDate, user, fileSize, md5, localPath, scope), "last")
+        return id
+
+    def getLabFiles(self):
+        files = self.exec("SELECT id, filename, uploaddate, uploaduser, filesize FROM files WHERE scope = ? or scope = ?", ("public", "lab"), getResult="all")
+        res = list()
+        for file in files:
+            res.append({
+                "id": file[0],
+                "fileName": file[1],
+                "uploadDate": file[2],
+                "uploadUser": file[3],
+                "fileSize": file[4]
+            })
+        return res
+    
+    def getFileByID(self, id):
+        file = self.exec("SELECT filename, uploaddate, uploaduser, filesize, md5, localpath, scope FROM files WHERE id = ?", (id, ), getResult="one")
+        if (file is None):
+            return None
+        else:
+            return {
+                "id": id,
+                "fileName": file[0],
+                "uploadDate": file[1],
+                "uploadUser": file[2],
+                "fileSize": file[3],
+                "md5": file[4],
+                "localPath": file[5],
+                "scope": file[6]
+            }
+
+    def updateFileMeta(self, id, fileName, localPath, scope):
+        if (not self.getFileByID(id)):
+            return False
+        self.exec("UPDATE files SET filename = ?, localpath = ?, scope = ? WHERE id = ?", (fileName, localPath, scope, id))
+        return True
+        
+    def reUploadFile(self, id, fileName, uploadDate, fileSize, md5, localPath, scope):
+        if (not self.getFileByID(id)):
+            return False
+        self.exec("UPDATE files SET filename = ?, uploaddate, filesize = ?, md5 = ?, localpath = ?, scope = ? WHERE id = ?", (fileName, uploadDate, fileSize, md5, localPath, scope, id))
+        return True
+    
+    def deleteFile(self, id):
+        if (not self.getFileByID(id)):
+            return False
+        self.exec("DELETE FROM files WHERE id = ?", (id, ))
+        
+
+

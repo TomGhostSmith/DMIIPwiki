@@ -12,7 +12,7 @@ export default defineUserConfig({
   theme: defaultTheme({
     logo: 'resources/ISTBI.png',
     home: '/wiki/',
-    navbar: ['/wiki/', '/wiki/seminar'],
+    navbar: ['/wiki/', '/wiki/seminar', '/wiki/fileList'],
   }),
 
   plugins: [
