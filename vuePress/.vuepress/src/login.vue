@@ -82,18 +82,24 @@
             // console.log(resp.role);
             // console.log(resp["role"]);
             status.login(resp.user, resp.role)
-            if (redirectTo === "/")
+            if (resp.emptyEmail)
             {
-              router.push("/wiki/") // Redirect after login
+              proxy.$message.success("登录成功，请完善邮箱信息以便找回密码")
+              router.push("/wiki/profile.html")
             }
-            else
+            else 
             {
-              router.push(redirectTo) // Redirect after login
+              if (redirectTo === "/")
+              {
+                router.push("/wiki/") // Redirect after login
+              }
+              else
+              {
+                router.push(redirectTo) // Redirect after login
+              }
+              proxy.$message.success("登录成功")
             }
-            proxy.$message.success("登录成功")
-          } else if (response.status === 302){
-            proxy.$message.success("登录成功，请完善邮箱信息以便找回密码")
-            router.push("/wiki/profile.html")
+          // } else if (response.status === 302){
           } else {
             errorMessage.value = "用户名或密码错误"
           }

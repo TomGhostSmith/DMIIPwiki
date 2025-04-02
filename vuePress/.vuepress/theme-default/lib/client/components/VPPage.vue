@@ -40,7 +40,6 @@ onBeforeMount(async () => {
   console.log(role);
 
   console.log(showFooter);
-  console.log(route.path);
   
   
   try{

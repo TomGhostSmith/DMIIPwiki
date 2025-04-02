@@ -1,4 +1,7 @@
 <template>
+    <el-dialog v-model="dialogVisible" title="文件列表" width="800">
+
+    </el-dialog>
     <h2>页面属性</h2>
     <el-form :model="attrs" label-width="auto" style="max-width: 600px;">
         <el-form-item label="页面地址">
@@ -36,8 +39,15 @@
     <span>Editable:</span>
     <el-input style="display: inline;margin-left: 10px;" v-model="attrs.modification"/>
     <br> -->
+    <h2>添加文件链接</h2>
+    <!-- <el-button type="primary" @click="showFiles"  style="margin-top: 20px">上传文件</el-button> -->
+    <!-- <el-button type="primary" @click="showFiles"  style="margin-top: 20px">选择文件</el-button> -->
+    <!-- <p>还没有上传？<el-button type="text" style="display: inline; font-size: 16px;">点击此处</el-button>去上传文件</p> -->
+    <p>还没有上传？
+        <router-link to="/wiki/file.html"><el-button type="text" style="font-size: 16px;margin-top: -2px;">点击此处</el-button></router-link>
+         去上传文件</p>
+    <file-list/>
     <h2>正文</h2>
-    <el-button type="primary" @click="showFiles"  style="margin-top: 20px">插入文件</el-button>
     <div id="editor" style="margin-top: 20px"></div>
     <el-button type="primary" :loading="isSaving" style="margin-top: 20px;" @click="saveContent">保存</el-button>
     <el-button :loading="isSaving" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消</el-button>
@@ -62,9 +72,14 @@ const redirectTo = route.query.redirect || '/'
 const newPage = route.query.create === "true"
 const attrs = ref({url: "", title: "", scope: "", modification: ""})
 const isSaving = ref(false)
+const dialogVisible = ref(false)
 
 let Editor
 const isAdmin = ref(false)
+
+const showFiles = () => {
+    dialogVisible.value = true
+}
 
 const loadContent = async () => {
     console.log("Loading content");

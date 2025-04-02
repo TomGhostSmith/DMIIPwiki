@@ -70,13 +70,14 @@ def login():
     nance = data.get("nance")
     if (db.checkUser(username, password, nance)):
         role = db.getRole(username)
-        response = make_response(jsonify({"user": username, "role": role}))
-        response.set_cookie("user_name", username, httponly=True, max_age=EXPIRATION_TIME)
         user = db.getUser(username)
-        if (user[2] == ""):
-            return response, 302
-        else:
-            return response
+        response = make_response(jsonify({"user": username, "role": role, "emptyEmail": user[2] == ""}))
+        response.set_cookie("user_name", username, httponly=True, max_age=EXPIRATION_TIME)
+        # if (user[2] == ""):
+        #     return response
+        # else:
+        #     return response
+        return response
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 

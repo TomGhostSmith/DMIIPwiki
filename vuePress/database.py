@@ -204,13 +204,13 @@ class Database():
         return result[0]
 
     def movePage(self, fileName, modifyDate, fileNewPath):
-        if (not self.getFilePath(fileName, modifyDate)):
+        if (not self.getPagePath(fileName, modifyDate)):
             return False
         self.exec("UPDATE docs SET filepath = ? WHERE filename = ? AND modifydate = ?", (fileNewPath, fileName, modifyDate))
         return True
 
     def updatePage(self, fileName, modifyDate, modifyUser):
-        if (self.getFilePath(fileName, modifyDate)):
+        if (self.getPagePath(fileName, modifyDate)):
             return False
         self.exec("INSERT INTO docs (filename, modifydate, modifyuser, filepath) VALUES (?, ?, ?, ?)", (fileName, modifyDate, modifyUser, fileName))
         return True
