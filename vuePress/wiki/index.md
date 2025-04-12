@@ -14,6 +14,6 @@ actions:
     link: /wiki/fileList.html
     type: plain
 
-footer: MIT Licensed | Copyright © 2025-present DMIIP Lab, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University
+footer: MIT Licensed | Copyright © 2025-present Laboratory of Data Mining and Intellignet Information Processing, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University
 ---
 <!-- [Go to Test Page](./get-started.html) -->

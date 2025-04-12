@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response, send_file
+from flask import Flask, request, jsonify, make_response, send_file, send_from_directory
 from flask_cors import CORS
 import time
 import os
@@ -10,6 +10,7 @@ from database import Database
 
 db = Database("wiki.db")
 app = Flask(__name__)
+app.config['IMAGE_FOLDER'] = "./resources"
 # CORS(app, supports_credentials=True, origins=["http://10.138.42.155"])  # Allow frontend to send cookies
 CORS(app, supports_credentials=True)  # Allow frontend to send cookies
 
@@ -475,7 +476,29 @@ def downloadFile(file_id):
     
     return send_file(file["localPath"], as_attachment=True, download_name=file["fileName"])
 
+@app.route('/getImages', methods=["GET"])
+def getImages():
+    try:
+        # List all image files in the image folder
+        images = [f for f in os.listdir(app.config['IMAGE_FOLDER'] + "/dashboard") if f.endswith(('jpg', 'jpeg', 'png', 'gif'))]
+        image_urls = [f'/api/dashboardImages/{image}' for image in images]  # Build URLs for images
+        return jsonify({'images': image_urls})  # Return as JSON
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
+@app.route('/dashboardImages/<filename>', methods=['GET'])
+def get_dashboard_image(filename):
+    try:
+        return send_from_directory(app.config['IMAGE_FOLDER'] + "/dashboard", filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
+    
+@app.route('/images/<filename>', methods=['GET'])
+def get_image(filename):
+    try:
+        return send_from_directory(app.config['IMAGE_FOLDER'], filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
 
 if __name__ == '__main__':
     # app.run(host="0.0.0.0", port=9006, ssl_context=('/Data/GhoST/ssl.crt', '/Data/GhoST/ssl.key'))

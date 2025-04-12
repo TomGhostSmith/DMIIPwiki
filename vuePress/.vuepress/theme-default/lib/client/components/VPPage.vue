@@ -71,7 +71,7 @@ const history = async () => {
 </script>
 
 <template>
-  <main class="vp-page">
+  <main class="vp-page" style="min-height: 100%;display: flex;flex-direction: column;">
     <slot name="top" />
 
     <!-- <p v-if="publicVisible">public</p>
@@ -80,21 +80,26 @@ const history = async () => {
       <p v-if="privateEditable">|private</p>
       <p v-if="!privateEditable">|admin</p> -->
 
-    <div vp-content>
-      <slot name="content-top" />
-
-      <h1>{{ page.frontmatter.title }}</h1>
-      <Content />
-
-      <slot name="content-bottom" />
+    <div class="content-wrapper" style="width: 100%">
+      <div vp-content style="display: block;">
+        <slot name="content-top" />
+  
+        <h1>{{ page.frontmatter.title }}</h1>
+        <Content />
+  
+        <slot name="content-bottom" />
+      </div>
     </div>
 
+    <div style="flex-grow: 1; padding: 20px;"></div>
+
     <!-- <VPPageMeta /> -->
-    <div class="vp-footer" vp-footer>
+    <!-- <div class="vp-footer" vp-footer style="padding: 0 300px 0"> -->
+    <div class="vp-footer" vp-footer style="margin-top: auto;">
       <span v-if="!isVisitor && showFooter">最后编辑：{{ lastModify }}</span>
       <el-button v-if="editable && showFooter" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
       <el-button v-if="!isVisitor && showFooter" type="text" @click="history" style="display: inline; margin-left: 20px;margin-bottom: 5px;">查看历史</el-button>
-      <p>MIT Licensed | Copyright © 2025-present DMIIP Lab, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University</p>
+      <p style="max-width: 880px; margin: auto;;">MIT Licensed | Copyright © 2025-present Laboratory of Data Mining and Intellignet Information Processing, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University</p>
     </div>
 
     <VPPageNav />
@@ -137,4 +142,12 @@ const history = async () => {
     }
   }
 }
+#app{
+  display: flex!important;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%!important
+}
+html {min-height: 100% !important}
+body {height: 100% !important}
 </style>

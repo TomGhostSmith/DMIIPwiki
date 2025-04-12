@@ -3,7 +3,7 @@ import VPAutoLink from '@theme/VPAutoLink.vue'
 import { useDarkMode } from '@theme/useDarkMode'
 import { useData } from '@theme/useData'
 import type { FunctionalComponent } from 'vue'
-import { computed, h } from 'vue'
+import { computed, h, ref, onMounted } from 'vue'
 import { ClientOnly, withBase } from 'vuepress/client'
 import type { DefaultThemeHomePageFrontmatter } from '../../shared/index.js'
 
@@ -67,19 +67,49 @@ const HomeHeroImage: FunctionalComponent = () => {
   // when using a different hero image in dark mode
   return h(ClientOnly, () => img)
 }
+
+const images = ref([])
+
+onMounted(async () => {
+  try {
+        const response = await fetch('/api/getImages');
+        const data = await response.json();
+        let imageList = []
+        console.log(data.images);
+        
+        for (let i = 0;i < data.images.length;i++)
+        {
+          imageList.push("http://10.138.42.155:9003" + data.images[i])
+        }
+        images.value = imageList
+        // images.value = data.images;
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      }
+})
 </script>
 
 <template>
   <header class="vp-hero">
     <HomeHeroImage />
 
-    <h1 v-if="heroText" id="main-title">
+    <!-- <h1 v-if="heroText" id="main-title">
       {{ heroText }}
-    </h1>
+    </h1> -->
 
-    <p v-if="tagline" class="vp-hero-description">
+    
+    <img src="http://10.138.42.155:9003/api/images/DMIIP.png" style="margin-top: 50px;">
+    <!-- <img src="../../../../../resources/scope.png" style="margin-top: 50px; width: 100%"> -->
+
+    <!-- <p v-if="tagline" class="vp-hero-description">
       {{ tagline }}
-    </p>
+    </p> -->
+
+    <el-carousel trigger="click" :interval="4000" arrow="always" style="height: 400px;">
+      <el-carousel-item v-for="(image, index) in images" :key="index"  style="height: 400px;">
+        <img :src="image" alt="Carousel Image" class="carousel-image"/>
+      </el-carousel-item>
+    </el-carousel>
 
     <p v-if="actions.length" class="vp-hero-actions">
       <VPAutoLink
@@ -191,5 +221,13 @@ const HomeHeroImage: FunctionalComponent = () => {
       background-color: var(--vp-c-accent-hover);
     }
   }
+}
+
+.carousel-image {
+  // width: 100%;
+  // height: 400px; /* Adjust the height as needed */
+  object-fit: contain; /* Ensures the image covers the entire carousel */
+  max-width: 100%;
+  max-height: 100%;
 }
 </style>

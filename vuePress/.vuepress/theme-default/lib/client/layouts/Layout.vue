@@ -160,6 +160,7 @@ const onBeforeLeave = scrollPromise.pending
 }
 
 .vp-theme-container {
+  min-height: calc(100% - 100px);
   // navbar is disabled
   &.no-navbar {
     .vp-sidebar {
