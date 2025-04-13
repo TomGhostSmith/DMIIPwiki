@@ -192,7 +192,7 @@ def saveContent():
         # fp.write(f"# {attrs["title"]}\n")
         fp.write(content)
         db.updatePage(fileName, attrs["lastModifyDate"], attrs["lastModify"])
-        os.system("bash build.sh")
+    os.system("bash build.sh")  # close the file first, then build
     return jsonify({"resp": "ok"})
 
 @app.route("/getAllUser", methods=["GET"])

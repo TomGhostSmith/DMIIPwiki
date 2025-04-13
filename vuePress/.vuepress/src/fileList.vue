@@ -77,7 +77,7 @@ const copyLink = (fileName, fileID) => {
 
     try
     {
-        let url = `http://10.138.42.155:9003/wiki/file?id=${fileID}`
+        let url = `http://10.138.42.155:9003/wiki/file.html?id=${fileID}`
     
         const tempElement = document.createElement('div');
         tempElement.innerHTML = `<a href="${url}">${fileName}</a>`;

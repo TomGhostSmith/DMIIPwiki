@@ -3,7 +3,7 @@
 
     </el-dialog>
     <h2>页面属性</h2>
-    <el-form :model="attrs" label-width="auto" style="max-width: 600px;">
+    <el-form :model="attrs" label-width="auto" style="max-width: 600px;margin-top: 20px;">
         <el-form-item label="页面地址">
             <el-input :readonly="true" v-model="redirectTo"/>
         </el-form-item>
@@ -58,6 +58,9 @@ import { useRoute, useRouter } from 'vuepress/client'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 import { userStatus } from "../globalStatus.js"
+
+import { ElLoading } from 'element-plus'
+
 
 const { proxy } = getCurrentInstance();
 
@@ -158,8 +161,9 @@ const saveContent = async() => {
         .find(part => part.type === 'timeZoneName').value;
 
     isSaving.value = true
-    console.log(editorInstance.value.getMarkdown())
-    console.log(attrs.value)
+    // console.log(editorInstance.value.getMarkdown())
+    // console.log(attrs.value)
+    const loadingInstance = ElLoading.service({ fullscreen: true, background: 'rgba(220, 220, 220, 0.5)'})
     try {
         attrs.value.lastModify = status.userName
         attrs.value.lastModifyDate = `${datePart} ${timePart} ${timeZone}`
@@ -179,10 +183,10 @@ const saveContent = async() => {
         if (response.ok)
         {
             proxy.$message.success('保存成功')
-            router.push(redirectTo)
-            setTimeout(() => {
-                location.reload(); // Force reload after the page navigation
-            }, 300); 
+            window.location.href = redirectTo
+            // router.push(redirectTo).then(() => {
+            //     location.reload(); // Force reload after the page navigation
+            // })
         }
         else if (response.status == 409)
         {
@@ -200,6 +204,7 @@ const saveContent = async() => {
         
     }
     isSaving.value = false
+    loadingInstance.close()
 }
 
 const cancel = () => {

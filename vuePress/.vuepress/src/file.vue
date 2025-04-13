@@ -23,7 +23,7 @@
                 </el-radio-group>
                 <!-- <el-input  v-model="form.group"/> -->
             </el-form-item>
-            <el-form-item :label="uploadText">
+            <el-form-item :label="uploadText"  v-if="canModifyScope">
                 <el-upload
                     class="upload-demo"
                     action=""
@@ -211,6 +211,10 @@ const reUpload = async () => {
             proxy.$message.success('修改成功')
             loadFileInfo()
         }
+        else if (response.status === 413)
+        {
+            proxy.$message.error("目前只允许上传500MB以内的文件")
+        }
         else
         {
             let data = await response.json()
@@ -231,25 +235,36 @@ const upload = async () => {
       formData.append("scope", form.value.scope);
       console.log(form.value.uploadUser)
     uploading.value = true
-    let response = await fetch('/api/uploadFile', { method: 'POST', credentials: 'include',
-        // headers: { 'Content-Type': 'multipart/form-data' },
-        body: formData
-    })
-    if (response.ok)
+    try
     {
-        proxy.$message.success('上传成功')
-        let resp = await response.json()
-        router.push({ path: '/wiki/file', query: { id: resp.id } })
-        setTimeout(() => {
+        let response = await fetch('/api/uploadFile', { method: 'POST', credentials: 'include',
+            // headers: { 'Content-Type': 'multipart/form-data' },
+            body: formData
+        })
+        if (response.ok)
+        {
+            proxy.$message.success('上传成功')
+            let resp = await response.json()
+            router.push({ path: '/wiki/file', query: { id: resp.id } })
+            setTimeout(() => {
                 location.reload(); // Force reload after the page navigation
             }, 300); 
-        // fileID = resp.id
-        // loadFileInfo()
+            // fileID = resp.id
+            // loadFileInfo()
+        }
+        else if (response.status === 413)
+        {
+            proxy.$message.error("目前只允许上传500MB以内的文件")
+        }
+        else
+        {
+            let data = await response.json()
+            proxy.$message.error(data.error)
+        }
     }
-    else
+    catch (err)
     {
-        let data = await response.json()
-        proxy.$message.error(data.error)
+        console.log(err);
     }
     uploading.value = false
 }

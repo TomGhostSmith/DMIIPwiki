@@ -71,7 +71,7 @@ const history = async () => {
 </script>
 
 <template>
-  <main class="vp-page" style="min-height: 100%;display: flex;flex-direction: column;">
+  <main class="vp-page">
     <slot name="top" />
 
     <!-- <p v-if="publicVisible">public</p>
@@ -95,10 +95,11 @@ const history = async () => {
 
     <!-- <VPPageMeta /> -->
     <!-- <div class="vp-footer" vp-footer style="padding: 0 300px 0"> -->
-    <div class="vp-footer" vp-footer style="margin-top: auto;">
-      <span v-if="!isVisitor && showFooter">最后编辑：{{ lastModify }}</span>
-      <el-button v-if="editable && showFooter" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
-      <el-button v-if="!isVisitor && showFooter" type="text" @click="history" style="display: inline; margin-left: 20px;margin-bottom: 5px;">查看历史</el-button>
+    <!-- <div class="vp-footer" vp-footer style="margin-top: auto;"> -->
+    <div class="vp-footer" v-if="showFooter" vp-footer style="margin-top: auto;">
+      <span v-if="!isVisitor">最后编辑：{{ lastModify }}</span>
+      <el-button v-if="editable" type="text" @click="edit" style="display: inline; margin-left: 20px;margin-bottom: 5px;">编辑本页</el-button>
+      <el-button v-if="!isVisitor" type="text" @click="history" style="display: inline; margin-left: 20px;margin-bottom: 5px;">查看历史</el-button>
       <p style="max-width: 880px; margin: auto;;">MIT Licensed | Copyright © 2025-present Laboratory of Data Mining and Intellignet Information Processing, Institute of Science and Technology for Brain-Inspired Intelligence, Fudan University</p>
     </div>
 
@@ -142,12 +143,15 @@ const history = async () => {
     }
   }
 }
-#app{
-  display: flex!important;
-  flex-direction: column;
-  flex-grow: 1;
-  height: 100%!important
+// #app{
+//   display: flex!important;
+//   flex-direction: column;
+//   flex-grow: 1;
+//   height: 100%!important
+// }
+// html {min-height: 100% !important}
+// body {height: 100% !important}
+.vp-navbar{
+  z-index: 100
 }
-html {min-height: 100% !important}
-body {height: 100% !important}
 </style>
