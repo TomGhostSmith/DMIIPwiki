@@ -154,4 +154,14 @@ const history = async () => {
 .vp-navbar{
   z-index: 100
 }
+
+td {
+  word-wrap: break-word;
+  white-space: normal;
+}
+td  a{
+  word-wrap: break-word;
+  white-space: normal;
+    word-break: break-word;
+}
 </style>

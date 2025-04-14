@@ -5,7 +5,7 @@
         <el-input v-model="username" placeholder="Username" />
         <br>
         <br>
-        <el-input v-model="password" type="password" placeholder="Password" show-password />
+        <el-input v-model="password" type="password" placeholder="Password" show-password @keydown.enter="login"/>
         <br>
         <br>
         <el-button type='primary' @click="login">登录</el-button> 

@@ -1,7 +1,11 @@
 <template>
     <el-input v-model="searchWord" style="margin-top: 20px;" placeholder="搜索文件"/>
-    <el-table :data="searchedData" :fit="true" :empty-text="emptyText" :height="tableHeight">
-        <el-table-column prop="fileName" label="文件名" min-width="200px"/>
+    <el-table v-loading="isLoading" :data="searchedData" :fit="true" :empty-text="emptyText" :height="tableHeight">
+        <el-table-column prop="fileName" label="文件名" min-width="200px">
+            <template #default="scope">
+                <div style="word-wrap: break-word; white-space: normal;  word-break: break-word;">{{ scope.row.fileName }}</div>
+            </template>
+        </el-table-column>
         <el-table-column prop="uploadDate" label="上传时间" width="200px"/>
         <el-table-column prop="uploadUser" label="上传用户" width="100px"/>
         <el-table-column prop="fileSize" label="文件大小" width="100px"/>
@@ -78,9 +82,8 @@ const copyLink = (fileName, fileID) => {
     try
     {
         let url = `http://10.138.42.155:9003/wiki/file.html?id=${fileID}`
-    
         const tempElement = document.createElement('div');
-        tempElement.innerHTML = `<a href="${url}">${fileName}</a>`;
+        tempElement.innerHTML = `<a href="${url}">${fileName.replaceAll('_', " ")}</a>`;  // replace "_" to avoid unwanted long unwrap file names
         document.body.appendChild(tempElement);
     
         const range = document.createRange();
@@ -144,9 +147,12 @@ const download = async (fileID, fileName) => {
       }
 }
 
+const isLoading = ref(false)
+
 onMounted(async () => {
     try
     {
+        isLoading.value = true
         const response = await fetch('/api/getLabFiles', {
           method: 'GET',
           credentials: 'include',  // Important: Allows cookies to be sent
@@ -177,6 +183,7 @@ onMounted(async () => {
     }catch (error) {
         console.log(error);
     }
+    isLoading.value = false
 
 })
 

@@ -15,6 +15,7 @@ import userOperation from "./src/userOperation.vue"
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import historyList from "./src/historyList.vue"
 import fileList from "./src/fileList.vue"
+import jumpToMain from "./src/jumpToMain.vue"
 import { ElMessage } from 'element-plus'
 // import { el } from 'element-plus/es/locales.mjs';
 
@@ -47,6 +48,7 @@ export default defineClientConfig({
     app.component("user-operation", userOperation)
     app.component("history", historyList)
     app.component("file-list", fileList)
+    app.component("jump-to-main", jumpToMain)
     app.config.globalProperties.$message = ElMessage;
 
     
