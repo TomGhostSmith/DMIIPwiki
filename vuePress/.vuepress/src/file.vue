@@ -54,7 +54,8 @@
     
     <div v-if="fileID && !selectedFile">
         <h2>下载</h2>
-        <el-button type="text" @click="download">{{ form.fileName }}</el-button>
+        <el-button type="primary" @click="copyLink" style="display: block">复制链接</el-button>
+        <el-button type="text" @click="download">下载 {{ form.fileName }}</el-button>
     </div>
 </template>
 <script setup>
@@ -89,6 +90,40 @@ const isVisitor = (status.userRole === "logout")
 const cancel = () => {
     loadFileInfo()
 }
+
+
+const copyLink = () => {
+    // const code = `<a href="http://10.138.42.155:9003/wiki/file?id=${fileID}">${fileName}</a>`
+    // const blob = new Blob([code], {type: 'text/html'})
+    // const clipboardItem = new ClipboardItem({'text/html': blob})
+
+    // navigator.clipboard.write([clipboardItem])
+    // .then(() => { proxy.$message.success("复制成功") })
+    // .catch(err => {proxy.$message.error("复制失败"); console.log(err)})
+    let fileName = form.fileName
+    try
+    {
+        let url = `http://10.138.42.155:9003/wiki/file.html?id=${fileID}`
+        const tempElement = document.createElement('div');
+        tempElement.innerHTML = `<a href="${url}">${url}</a>`;  // replace "_" to avoid unwanted long unwrap file names
+        document.body.appendChild(tempElement);
+    
+        const range = document.createRange();
+        range.selectNodeContents(tempElement);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    
+        document.execCommand('copy'); // Copies the formatted hyperlink
+        document.body.removeChild(tempElement);
+        proxy.$message.success("复制成功")
+    } catch (err)
+    {
+        proxy.$message.error("复制失败"); 
+        console.log(err)
+    }
+}
+
 
 const deleteFile = async() => {
     try{

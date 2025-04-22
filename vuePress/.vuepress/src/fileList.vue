@@ -9,15 +9,17 @@
         <el-table-column prop="uploadDate" label="上传时间" width="200px"/>
         <el-table-column prop="uploadUser" label="上传用户" width="100px"/>
         <el-table-column prop="fileSize" label="文件大小" width="100px"/>
-        <el-table-column v-if="!showSelect" label="操作" width="120px">
+        <el-table-column v-if="!showSelect" label="操作" width="200px">
             <template #default="scope">
                 <el-button type="text" @click="detail(scope.row.id)">查看</el-button>
                 <el-button type="text" @click="download(scope.row.id, scope.row.fileName)">下载</el-button>
+                <el-button type="text" @click="copyLink(scope.row.fileName, scope.row.id, true)">复制链接</el-button>
             </template>
         </el-table-column>
-        <el-table-column v-if="showSelect" label="操作" width="100px">
+        <el-table-column v-if="showSelect" label="操作" width="150px">
             <template #default="scope">
-                <el-button type="text" @click="copyLink(scope.row.fileName, scope.row.id)">复制链接</el-button>
+                <el-button type="text" @click="detail(scope.row.id)">查看</el-button>
+                <el-button type="text" @click="copyLink(scope.row.fileName, scope.row.id, false)">复制链接</el-button>
             </template>
         </el-table-column>
     </el-table>
@@ -70,7 +72,7 @@ const detail = (fileID) =>
     window.open(routeData.href, '_blank')
 }
 
-const copyLink = (fileName, fileID) => {
+const copyLink = (fileName, fileID, fullURL) => {
     // const code = `<a href="http://10.138.42.155:9003/wiki/file?id=${fileID}">${fileName}</a>`
     // const blob = new Blob([code], {type: 'text/html'})
     // const clipboardItem = new ClipboardItem({'text/html': blob})
@@ -82,8 +84,9 @@ const copyLink = (fileName, fileID) => {
     try
     {
         let url = `http://10.138.42.155:9003/wiki/file.html?id=${fileID}`
+        let content = fullURL? url : fileName.replaceAll('_', " ") 
         const tempElement = document.createElement('div');
-        tempElement.innerHTML = `<a href="${url}">${fileName.replaceAll('_', " ")}</a>`;  // replace "_" to avoid unwanted long unwrap file names
+        tempElement.innerHTML = `<a href="${url}">${content}</a>`;  // replace "_" to avoid unwanted long unwrap file names
         document.body.appendChild(tempElement);
     
         const range = document.createRange();
