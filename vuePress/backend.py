@@ -460,7 +460,12 @@ def getFileInfo():
         return jsonify({"error": "没有权限"}), 401
     if (cookieUserName is None and file["scope"] == "lab"):
         return jsonify({"error": "没有权限"}), 401
-    return jsonify({"file": file})
+    canWatch = False
+    if (file["fileName"].endswith('mp4')):
+        videoFolder = file["fileName"].replace("mp4", "")
+        if (os.path.exists(f"videos/{videoFolder}")):
+            canWatch = True
+    return jsonify({"file": file, "canWatch": canWatch})
     
 @app.route('/downloadFile/<file_id>', methods=["GET"])
 def downloadFile(file_id):
@@ -499,6 +504,51 @@ def get_image(filename):
         return send_from_directory(app.config['IMAGE_FOLDER'], filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 404
+
+
+# @cross_origin(methods=["GET"])
+@app.route("/file/<path:filename>")
+def serve_file(filename):
+    cookieUserName = request.cookies.get("user_name")
+    if (cookieUserName is None):
+        return jsonify({"error": "没有权限"}), 401
+    return send_from_directory(f"videos", filename)
+
+# @cross_origin(methods=["GET"])
+@app.route("/getScript/<path:filename>", methods=["GET"])
+def echo_api(filename):
+    cookieUserName = request.cookies.get("user_name")
+    if (cookieUserName is None):
+        return jsonify({"error": "没有权限"}), 401
+    results = []
+    segment = []
+    speaker = None
+    prevStart = 0
+    prevText = None
+    insertSpeaker = None
+    with open(f"videos/{filename}/{filename}.script") as fp:
+    # with open(f"working/test.script") as fp:
+        for line in fp:
+            if ('\t' not in line):
+                insertSpeaker = line.strip()
+                continue
+            # s, t= line.strip().split('\t', 1)
+            s, t, e= line.strip().split('\t')
+            thisStart = float(t)
+            if (prevText):
+                segment.append([prevText, prevStart, thisStart])
+            if (insertSpeaker):
+                if (segment):
+                    results.append([speaker, segment])
+                    segment = []
+                speaker = insertSpeaker
+                insertSpeaker = None
+            prevText = s
+            prevStart = thisStart
+    segment.append([prevText, prevStart, prevStart + 100])
+    results.append([speaker, segment])
+    return jsonify(results)
+
 
 if __name__ == '__main__':
     # app.run(host="0.0.0.0", port=9006, ssl_context=('/Data/GhoST/ssl.crt', '/Data/GhoST/ssl.key'))

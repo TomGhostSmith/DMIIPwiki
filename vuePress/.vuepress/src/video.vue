@@ -1,68 +1,49 @@
 <template>
     <div v-if="!isVisitor">
-        <h2 v-if="fileID">{{ form.fileName }}</h2>
-        <h2 v-if="!fileID">待上传</h2>
-        <el-form :model="form" label-width="auto" style="max-width: 600px;">
-            <el-form-item v-if="fileID || selectedFile" label="文件名">
-                <el-input :readonly="!canModifyScope || selectedFile" v-model="form.fileName" @change="modify"/>
-            </el-form-item>
-            <el-form-item v-if="fileID && !selectedFile" label="文件大小">
-                <el-input :readonly="true" v-model="form.fileSize"/>
-            </el-form-item>
-            <el-form-item v-if="fileID || selectedFile" label="上传用户">
-                <el-input :readonly="true" v-model="form.uploadUser"/>
-            </el-form-item>
-            <el-form-item v-if="fileID && !selectedFile" label="上传时间">
-                <el-input :readonly="true" v-model="form.uploadDate"/>
-            </el-form-item>
-            <el-form-item v-if="fileID || selectedFile" label="可见范围">
-                <el-radio-group :disabled="!canModifyScope" v-model="form.scope" @change="modify">
-                    <el-radio value="public">公开</el-radio>
-                    <el-radio value="lab">课题组成员</el-radio>
-                    <el-radio value="private">仅自己</el-radio>
-                </el-radio-group>
-                <!-- <el-input  v-model="form.group"/> -->
-            </el-form-item>
-            <el-form-item :label="uploadText"  v-if="canModifyScope">
-                <el-upload
-                    class="upload-demo"
-                    action=""
-                    :limit="1"
-                    :auto-upload="false"
-                    :show-file-list="true"
-                    @change="fileChange"
-                    >
-                    <el-button type="success">选择文件</el-button>
-                </el-upload>
-                <!-- :before-upload="" -->
-            </el-form-item>
-        </el-form>
-        <el-button v-if="fileID || selectedFile" :disabled="!modified" type="primary" style="margin-top: 20px;" @click="save" :loading="uploading">{{ saveText }}</el-button>
-        <el-button v-if="fileID" :disabled="!modified" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消修改</el-button>
-        <el-popconfirm
-            v-if="fileID && !selectedFile && canModifyScope"
-            confirm-button-text="确认"
-            cancel-button-text="取消"
-            title="确认要删除吗？"
-            @confirm="deleteFile"
-        >
-            <template #reference>
-                <el-button   type="danger" style="margin-top: 20px;" >删除文件</el-button>
-            </template>
-        </el-popconfirm>
-    
-        <div v-if="fileID && !selectedFile">
-            <h2>下载</h2>
-            <el-button type="primary" @click="copyLink" style="display: block">复制链接</el-button>
-            <el-button type="primary" @click="watchThis" v-if="canWatch">在线观看</el-button>
-            <el-button type="text" @click="download">下载 {{ form.fileName }}</el-button>
+        <splitpanes style="height: 100%;">
+    <pane min-size="20">
+      <el-main style="height: 100%;padding:0">
+          <splitpanes horizontal>
+            <pane min-size="20">
+                <h2>{{ form.fileName }}</h2>
+                    <video
+                    ref="videoRef"
+                      controls
+                      style="width: 100%; max-height: 80%;"
+                      @timeupdate="onTimeUpdate"
+                    ></video>
+            </pane>
+            <pane min-size="20">
+              <h2>Meeting info</h2>
+            </pane>
+          </splitpanes>
+        </el-main>
+      </pane>
+      <pane min-size="20" max-size="60" size="20">
+        <el-aside style="height: 100%; width: 100%">
+        <h2>Transcript</h2>
+        <div style="text-align: left; padding: 20px">
+          <div v-for="(seg, t) in scripts" :key="t" >
+            <p class="speaker">{{ seg[0] }}: </p>
+            <p>
+              <span class="script" v-for="(s, t) in seg[1]" :key="t" :style="getColor(s[1], s[2])" @click="jumpTo(s[1])">{{ s[0] }}</span>
+            </p>
+          </div>
         </div>
+        
+      </el-aside>
+    </pane>
+    
+  </splitpanes>
     </div>
 </template>
 <script setup>
 import { ref, onMounted, nextTick, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vuepress/client'
 import { userStatus } from "../globalStatus.js"
+import { Splitpanes, Pane } from 'splitpanes'
+import 'splitpanes/dist/splitpanes.css'
+import Hls from 'hls.js';
 
 const { proxy } = getCurrentInstance();
 
@@ -78,12 +59,16 @@ const selectedFile = ref(null)
 
 const uploadText = ref("") 
 const saveText = ref("")
-const canWatch = ref(false)
 
 const modify = () => {
     console.log("modified");
     modified.value = true
 }
+
+const scripts = ref([])
+const hls = ref(null)
+const currentTime = ref(0)
+const videoRef = ref(null);
 
 const uploading = ref(false)
 
@@ -327,7 +312,6 @@ const loadFileInfo = async () => {
                 uploadDate: resp.file.uploadDate,
                 scope: resp.file.scope
             }
-            canWatch.value = resp.canWatch || false
             // form.value = resp.file
             canModifyScope.value = (form.value.uploadUser === status.userName)
         }
@@ -340,7 +324,39 @@ const loadFileInfo = async () => {
                 router.push('/wiki/login')
             }
         }
+
+        const video = videoRef.value
+        let videoSrc = '/api/file/' + form.value.fileName.replace('mp4', '') + '/' + form.value.fileName.replace('mp4', '.m3u8')
         
+
+        if (Hls.isSupported()) {
+        hls.value = new Hls()
+        hls.value.loadSource(videoSrc)
+        hls.value.attachMedia(video)
+        hls.value.on(Hls.Events.MANIFEST_PARSED, () => {
+            hls.value.subtitleTrack = 0;
+        //   console.log("Hi!!!");
+        //   video.play()
+        })
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log("Hello!!!");
+        video.src = videoSrc
+        // video.addEventListener('loadedmetadata', () => {
+        //   video.play()
+        // })
+        }
+
+        const response2 = await fetch('/api/getScript/' + form.value.fileName.replace('mp4', ''), {
+          method: 'GET',
+          credentials: 'include',  // Important: Allows cookies to be sent
+          headers: { 'Content-Type': 'application/json' },
+        })
+
+        if (response2.ok)
+        {
+            scripts.value = resp.data
+        }
+
     }catch (error) {
         console.log(error);
         proxy.$message.error("未知错误")
@@ -349,8 +365,26 @@ const loadFileInfo = async () => {
 
 }
 
-const watchThis = () => {
-    router.push({ path: '/wiki/video', query: { id: fileID } })
+const getColor = (t1, t2) =>
+{
+        
+        let _this = this        
+        if ((t1 <= _this.currentTime) && (t2 > _this.currentTime))
+        {
+          return {background: "#fbbf69"}
+        }
+        else
+        {
+          return {}
+        }
+}
+const onTimeUpdate = () => {
+        
+        currentTime = videoRef.value.currentTime;
+        // console.log(this.currentTime);
+}
+const jumpTo = (t) => {
+    videoRef.value.currentTime = t
 }
 
 const getFileSizeText = (bytes) => {
@@ -383,6 +417,13 @@ onMounted(async () => {
         loadFileInfo()
         uploadText.value = "重新上传"
         saveText.value = "保存修改"
+    }
+
+})
+
+onBeforeUnmount(async () => {
+    if (hls.value) {
+      hls.value.destroy();
     }
 })
 </script>
