@@ -33,8 +33,10 @@
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
     "element-plus": "^2.9.7",
+    "hls.js": "^1.6.13",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.2.0",
+    "splitpanes": "^4.0.4",
     "wiki": "file:"
   }
 }
