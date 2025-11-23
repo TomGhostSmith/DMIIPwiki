@@ -1,40 +1,58 @@
 <template>
     <div v-if="!isVisitor">
-        <splitpanes style="height: 100%;">
-    <pane min-size="20">
-      <el-main style="height: 100%;padding:0">
-          <splitpanes horizontal>
+        <splitpanes style="height: 80vh;">
             <pane min-size="20">
-                <h2>{{ form.fileName }}</h2>
-                    <video
-                    ref="videoRef"
-                      controls
-                      style="width: 100%; max-height: 80%;"
-                      @timeupdate="onTimeUpdate"
-                    ></video>
+                <el-main style="height: 100%;padding:0">
+                    <splitpanes horizontal>
+                        <pane min-size="20">
+                                <video
+                                ref="videoRef"
+                                controls
+                                style="width: calc(100% - 10px); max-height: calc(100% - 10px);"
+                                @timeupdate="onTimeUpdate"
+                                ></video>
+                        </pane>
+                        <pane min-size="20" style="overflow: scroll">
+                        <h2>视频信息</h2>
+                        <el-form :model="form" label-width="auto" style="max-width: 600px;">
+                            <el-form-item v-if="fileID || selectedFile" label="文件名">
+                                <el-input :readonly="!canModifyScope || selectedFile" v-model="form.fileName" @change="modify"/>
+                            </el-form-item>
+                            <el-form-item v-if="fileID && !selectedFile" label="文件大小">
+                                <el-input :readonly="true" v-model="form.fileSize"/>
+                            </el-form-item>
+                            <el-form-item v-if="fileID || selectedFile" label="上传用户">
+                                <el-input :readonly="true" v-model="form.uploadUser"/>
+                            </el-form-item>
+                            <el-form-item v-if="fileID && !selectedFile" label="上传时间">
+                                <el-input :readonly="true" v-model="form.uploadDate"/>
+                            </el-form-item>
+                            <el-form-item v-if="fileID && !selectedFile" label="下载">
+                                <el-button type="primary" @click="copyLink" style="display: block">复制链接</el-button>
+                                <el-button type="text" @click="download">下载 {{ form.fileName }}</el-button>
+                            </el-form-item>
+                        </el-form>
+                        </pane>
+                    </splitpanes>
+                </el-main>
             </pane>
-            <pane min-size="20">
-              <h2>Meeting info</h2>
+            <pane min-size="20" max-size="60" size="20">
+                <el-aside style="height: 100%; width: 100%;padding: 0 20px 0; overflow: hidden;">
+                    <h2>文字记录</h2>
+                    <div style="text-align: left; padding: 20px; height: 70vh; overflow: scroll;">
+                        <div v-for="(seg, t) in scripts" :key="t" >
+                            <p>
+                                <span class="speaker">{{ seg[0] + ' ' }} </span>
+                                <span>{{ formatTime(seg[1][0][1]) }} </span>
+                            </p>
+                            <p>
+                            <span class="script" v-for="(s, t) in seg[1]" :key="t" :style="getColor(s[1], s[2])" @click="jumpTo(s[1])">{{ s[0] + ' ' }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </el-aside>
             </pane>
-          </splitpanes>
-        </el-main>
-      </pane>
-      <pane min-size="20" max-size="60" size="20">
-        <el-aside style="height: 100%; width: 100%">
-        <h2>Transcript</h2>
-        <div style="text-align: left; padding: 20px">
-          <div v-for="(seg, t) in scripts" :key="t" >
-            <p class="speaker">{{ seg[0] }}: </p>
-            <p>
-              <span class="script" v-for="(s, t) in seg[1]" :key="t" :style="getColor(s[1], s[2])" @click="jumpTo(s[1])">{{ s[0] }}</span>
-            </p>
-          </div>
-        </div>
-        
-      </el-aside>
-    </pane>
-    
-  </splitpanes>
+        </splitpanes>
     </div>
 </template>
 <script setup>
@@ -80,17 +98,10 @@ const cancel = () => {
 
 
 const copyLink = () => {
-    // const code = `<a href="http://10.138.42.155:9003/wiki/file?id=${fileID}">${fileName}</a>`
-    // const blob = new Blob([code], {type: 'text/html'})
-    // const clipboardItem = new ClipboardItem({'text/html': blob})
-
-    // navigator.clipboard.write([clipboardItem])
-    // .then(() => { proxy.$message.success("复制成功") })
-    // .catch(err => {proxy.$message.error("复制失败"); console.log(err)})
     let fileName = form.fileName
     try
     {
-        let url = `http://10.138.42.155:9003/wiki/file.html?id=${fileID}`
+        let url = `http://10.176.64.122/wiki/video.html?id=${fileID}`
         const tempElement = document.createElement('div');
         tempElement.innerHTML = `<a href="${url}">${url}</a>`;  // replace "_" to avoid unwanted long unwrap file names
         document.body.appendChild(tempElement);
@@ -108,27 +119,6 @@ const copyLink = () => {
     {
         proxy.$message.error("复制失败"); 
         console.log(err)
-    }
-}
-
-
-const deleteFile = async() => {
-    try{
-        const response = await fetch('/api/deleteFile/' + fileID, { method: 'DELETE', credentials: 'include'})
-        if (response.ok)
-        {
-            proxy.$message.success("删除成功")
-            router.push("/wiki/fileList")
-        }
-        else
-        {
-            let resp = await response.json()
-            proxy.$message.error(resp.error)
-        }
-    }catch (error)
-    {
-        console.log(error);
-        proxy.$message.error("未知错误")
     }
 }
 
@@ -158,137 +148,6 @@ const download = async () => {
         console.error("Download error:", error);
         proxy.$message.error("未知错误");
       }
-}
-
-// const extractFilename = (response) => {
-//       const contentDisposition = response.headers.get("Content-Disposition");
-//       if (contentDisposition) {
-//         const matches = contentDisposition.match(/filename="(.+)"/);
-//         return matches ? matches[1] : "downloaded_file";
-//       }
-//       return "downloaded_file";
-// }
-
-const save = async () => {
-    if (selectedFile.value == null)
-    {
-        updateMeta()
-    }
-    else if (fileID)
-    {
-        reUpload()
-    }
-    else
-    {
-        upload()
-    }
-}
-
-const updateMeta = async() => {
-    let response = await fetch('/api/updateFileMeta', { method: 'PUT', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            id: fileID,
-            fileName: form.value.fileName,
-            scope: form.value.scope,
-        })
-
-    })
-    if (response.ok)
-    {
-        proxy.$message.success('修改成功')
-        loadFileInfo()
-    }
-    else
-    {
-        let data = await response.json()
-        proxy.$message.error('修改失败: ' + data.error)
-    }
-}
-
-const fileChange = (file) => {
-    selectedFile.value = file
-    modified.value = true
-    form.value.uploadUser = status.userName
-    form.value.fileName = file.name
-    form.value.scope = "lab"
-    
-    return false
-}
-
-const reUpload = async () => {
-    let formData = new FormData();
-      formData.append("file", selectedFile.value.raw);
-      formData.append("id", fileID);
-      formData.append("scope", form.value.scope);
-    uploading.value = true
-    try
-    {
-        let response = await fetch('/api/reUploadFile', { method: 'PUT', credentials: 'include',
-            // headers: { 'Content-Type': 'multipart/form-data' },
-            body: formData
-        })
-        if (response.ok)
-        {
-            proxy.$message.success('修改成功')
-            loadFileInfo()
-        }
-        else if (response.status === 413)
-        {
-            proxy.$message.error("目前只允许上传500MB以内的文件")
-        }
-        else
-        {
-            let data = await response.json()
-            proxy.$message.error(data.error)
-        }
-    }
-    catch (error)
-    {
-        console.log(error);
-    }
-    uploading.value = false
-}
-
-const upload = async () => {
-    let formData = new FormData();
-      formData.append("file", selectedFile.value.raw);
-      formData.append("user", form.value.uploadUser);
-      formData.append("scope", form.value.scope);
-      console.log(form.value.uploadUser)
-    uploading.value = true
-    try
-    {
-        let response = await fetch('/api/uploadFile', { method: 'POST', credentials: 'include',
-            // headers: { 'Content-Type': 'multipart/form-data' },
-            body: formData
-        })
-        if (response.ok)
-        {
-            proxy.$message.success('上传成功')
-            let resp = await response.json()
-            router.push({ path: '/wiki/file', query: { id: resp.id } })
-            setTimeout(() => {
-                location.reload(); // Force reload after the page navigation
-            }, 300); 
-            // fileID = resp.id
-            // loadFileInfo()
-        }
-        else if (response.status === 413)
-        {
-            proxy.$message.error("目前只允许上传500MB以内的文件")
-        }
-        else
-        {
-            let data = await response.json()
-            proxy.$message.error(data.error)
-        }
-    }
-    catch (err)
-    {
-        console.log(err);
-    }
-    uploading.value = false
 }
 
 const loadFileInfo = async () => {
@@ -326,7 +185,7 @@ const loadFileInfo = async () => {
         }
 
         const video = videoRef.value
-        let videoSrc = '/api/file/' + form.value.fileName.replace('mp4', '') + '/' + form.value.fileName.replace('mp4', '.m3u8')
+        let videoSrc = '/api/file/' + form.value.fileName.replace('.mp4', '') + '/' + form.value.fileName.replace('.mp4', '.m3u8')
         
 
         if (Hls.isSupported()) {
@@ -346,7 +205,7 @@ const loadFileInfo = async () => {
         // })
         }
 
-        const response2 = await fetch('/api/getScript/' + form.value.fileName.replace('mp4', ''), {
+        const response2 = await fetch('/api/getScript/' + form.value.fileName.replace('.mp4', ''), {
           method: 'GET',
           credentials: 'include',  // Important: Allows cookies to be sent
           headers: { 'Content-Type': 'application/json' },
@@ -354,7 +213,7 @@ const loadFileInfo = async () => {
 
         if (response2.ok)
         {
-            scripts.value = resp.data
+            scripts.value = await response2.json()
         }
 
     }catch (error) {
@@ -368,10 +227,9 @@ const loadFileInfo = async () => {
 const getColor = (t1, t2) =>
 {
         
-        let _this = this        
-        if ((t1 <= _this.currentTime) && (t2 > _this.currentTime))
+        if ((t1 <= currentTime.value) && (t2 > currentTime.value))
         {
-          return {background: "#fbbf69"}
+          return {background: "#ffff69"}
         }
         else
         {
@@ -379,9 +237,8 @@ const getColor = (t1, t2) =>
         }
 }
 const onTimeUpdate = () => {
-        
-        currentTime = videoRef.value.currentTime;
-        // console.log(this.currentTime);
+    currentTime.value = videoRef.value.currentTime;
+    // console.log(currentTime.value);
 }
 const jumpTo = (t) => {
     videoRef.value.currentTime = t
@@ -400,6 +257,14 @@ const getFileSizeText = (bytes) => {
     return res
 }
 
+const formatTime = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);   // or Math.round if you prefer
+
+  return `${hours}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
 onMounted(async () => {
     console.log(fileID)
     if (fileID == undefined)
@@ -415,8 +280,6 @@ onMounted(async () => {
     else
     {
         loadFileInfo()
-        uploadText.value = "重新上传"
-        saveText.value = "保存修改"
     }
 
 })
@@ -427,3 +290,55 @@ onBeforeUnmount(async () => {
     }
 })
 </script>
+
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style>
+
+.splitpanes--vertical > .splitpanes__splitter {
+  background-color: #dcdfe6; /* show a visible divider */
+  width: 4px;                /* thickness of the bar */
+  cursor: col-resize;        /* cursor for resizing */
+  transition: background-color 0.2s;
+}
+
+.splitpanes--horizontal > .splitpanes__splitter {
+  background-color: #dcdfe6; /* show a visible divider */
+  height: 4px;                /* thickness of the bar */
+  cursor: row-resize;        /* cursor for resizing */
+  transition: background-color 0.2s;
+}
+
+.splitpanes__splitter:hover {
+  background-color: #409EFF; /* highlight when hovered */
+}
+
+.fileItem{
+  font-size: 20px!important;
+}
+
+.speaker{
+  font-size: 20px;
+  font-weight: bold
+}
+.script{
+  cursor: pointer;
+  font-size: 18px
+}
+
+.script:hover
+{
+  background-color: #ffff69;
+}
+
+    
+</style>
+
+<style lang="scss" scoped>
+[vp-content]
+{
+    & {
+        max-width: calc(100% - 5rem)!important;
+    }
+}
+</style>

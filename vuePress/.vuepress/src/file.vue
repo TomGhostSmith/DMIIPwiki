@@ -1,45 +1,47 @@
 <template>
-    <div v-if="!isVisitor">
-        <h2 v-if="fileID">{{ form.fileName }}</h2>
-        <h2 v-if="!fileID">待上传</h2>
-        <el-form :model="form" label-width="auto" style="max-width: 600px;">
-            <el-form-item v-if="fileID || selectedFile" label="文件名">
-                <el-input :readonly="!canModifyScope || selectedFile" v-model="form.fileName" @change="modify"/>
-            </el-form-item>
-            <el-form-item v-if="fileID && !selectedFile" label="文件大小">
-                <el-input :readonly="true" v-model="form.fileSize"/>
-            </el-form-item>
-            <el-form-item v-if="fileID || selectedFile" label="上传用户">
-                <el-input :readonly="true" v-model="form.uploadUser"/>
-            </el-form-item>
-            <el-form-item v-if="fileID && !selectedFile" label="上传时间">
-                <el-input :readonly="true" v-model="form.uploadDate"/>
-            </el-form-item>
-            <el-form-item v-if="fileID || selectedFile" label="可见范围">
-                <el-radio-group :disabled="!canModifyScope" v-model="form.scope" @change="modify">
-                    <el-radio value="public">公开</el-radio>
-                    <el-radio value="lab">课题组成员</el-radio>
-                    <el-radio value="private">仅自己</el-radio>
-                </el-radio-group>
-                <!-- <el-input  v-model="form.group"/> -->
-            </el-form-item>
-            <el-form-item :label="uploadText"  v-if="canModifyScope">
-                <el-upload
-                    class="upload-demo"
-                    action=""
-                    :limit="1"
-                    :auto-upload="false"
-                    :show-file-list="true"
-                    @change="fileChange"
-                    >
-                    <el-button type="success">选择文件</el-button>
-                </el-upload>
-                <!-- :before-upload="" -->
-            </el-form-item>
-        </el-form>
-        <el-button v-if="fileID || selectedFile" :disabled="!modified" type="primary" style="margin-top: 20px;" @click="save" :loading="uploading">{{ saveText }}</el-button>
-        <el-button v-if="fileID" :disabled="!modified" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消修改</el-button>
-        <el-popconfirm
+    <div>
+
+        <div v-if="!isVisitor">
+            <h2 v-if="fileID">{{ form.fileName }}</h2>
+            <h2 v-if="!fileID">待上传</h2>
+            <el-form :model="form" label-width="auto" style="max-width: 600px;">
+                <el-form-item v-if="fileID || selectedFile" label="文件名">
+                    <el-input :readonly="!canModifyScope || selectedFile" v-model="form.fileName" @change="modify"/>
+                </el-form-item>
+                <el-form-item v-if="fileID && !selectedFile" label="文件大小">
+                    <el-input :readonly="true" v-model="form.fileSize"/>
+                </el-form-item>
+                <el-form-item v-if="fileID || selectedFile" label="上传用户">
+                    <el-input :readonly="true" v-model="form.uploadUser"/>
+                </el-form-item>
+                <el-form-item v-if="fileID && !selectedFile" label="上传时间">
+                    <el-input :readonly="true" v-model="form.uploadDate"/>
+                </el-form-item>
+                <el-form-item v-if="fileID || selectedFile" label="可见范围">
+                    <el-radio-group :disabled="!canModifyScope" v-model="form.scope" @change="modify">
+                        <el-radio value="public">公开</el-radio>
+                        <el-radio value="lab">课题组成员</el-radio>
+                        <el-radio value="private">仅自己</el-radio>
+                    </el-radio-group>
+                    <!-- <el-input  v-model="form.group"/> -->
+                </el-form-item>
+                <el-form-item :label="uploadText" v-if="canModifyScope">
+                    <el-upload
+                        class="upload-demo"
+                        action=""
+                        :limit="1"
+                        :auto-upload="false"
+                        :show-file-list="true"
+                        @change="fileChange"
+                        >
+                        <el-button type="success">选择文件</el-button>
+                    </el-upload>
+                    <!-- :before-upload="" -->
+                </el-form-item>
+            </el-form>
+            <el-button v-if="fileID || selectedFile" :disabled="!modified" type="primary" style="margin-top: 20px;" @click="save" :loading="uploading">{{ saveText }}</el-button>
+            <el-button v-if="fileID" :disabled="!modified" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消修改</el-button>
+            <el-popconfirm
             v-if="fileID && !selectedFile && canModifyScope"
             confirm-button-text="确认"
             cancel-button-text="取消"
@@ -50,12 +52,13 @@
                 <el-button   type="danger" style="margin-top: 20px;" >删除文件</el-button>
             </template>
         </el-popconfirm>
-    
+        </div>
+        
         <div v-if="fileID && !selectedFile">
             <h2>下载</h2>
             <el-button type="primary" @click="copyLink" style="display: block">复制链接</el-button>
-            <el-button type="primary" @click="watchThis" v-if="canWatch">在线观看</el-button>
-            <el-button type="text" @click="download">下载 {{ form.fileName }}</el-button>
+            <el-button type="primary" @click="watchThis" style="display: block; margin-left: 0; margin-top: 10px; margin-bottom: 10px;" v-if="canWatch">在线观看</el-button>
+            <el-button type="text" @click="download" style="margin-left: 0; margin-top: 10px">下载 {{ form.fileName }}</el-button>
         </div>
     </div>
 </template>
@@ -95,13 +98,6 @@ const cancel = () => {
 
 
 const copyLink = () => {
-    // const code = `<a href="http://10.138.42.155:9003/wiki/file?id=${fileID}">${fileName}</a>`
-    // const blob = new Blob([code], {type: 'text/html'})
-    // const clipboardItem = new ClipboardItem({'text/html': blob})
-
-    // navigator.clipboard.write([clipboardItem])
-    // .then(() => { proxy.$message.success("复制成功") })
-    // .catch(err => {proxy.$message.error("复制失败"); console.log(err)})
     let fileName = form.fileName
     try
     {
