@@ -9,7 +9,7 @@ import { userStatus } from "../../../../globalStatus.js"
 
 const status = userStatus()
 
-
+const emit = defineEmits(['layout'])
 
 defineSlots<{
   'top'?: (props: Record<never, never>) => VNode | VNode[] | null
@@ -32,6 +32,9 @@ const isVisitor = status.userRole === "logout"
 
 const lastModify = page.value.frontmatter.lastModify + ", " + page.value.frontmatter.lastModifyDate
 
+const showSideBar = page.value.frontmatter.sidebar != false
+const pageWidth = page.value.frontmatter.width
+
 const showFooter = page.value.frontmatter.foot != false
 onBeforeMount(async () => {
   const role = status.userRole
@@ -40,6 +43,8 @@ onBeforeMount(async () => {
   console.log(role);
 
   console.log(showFooter);
+
+  emit('layout', [showSideBar, pageWidth])
   
   
   try{
@@ -91,7 +96,7 @@ const history = async () => {
       </div>
     </div>
 
-    <div style="flex-grow: 1; padding: 20px;"></div>
+    <div style="flex-grow: 1; padding: 20px;" v-if="showFooter"></div>
 
     <!-- <VPPageMeta /> -->
     <!-- <div class="vp-footer" vp-footer style="padding: 0 300px 0"> -->
@@ -118,7 +123,7 @@ const history = async () => {
 
   // leave space for navbar
   padding-top: var(--navbar-height);
-  padding-bottom: 2rem;
+  padding-bottom: 0;
 
   // leave space for sidebar
   padding-inline-start: var(--sidebar-width);
@@ -154,14 +159,10 @@ const history = async () => {
 .vp-navbar{
   z-index: 100
 }
-
-td {
-  word-wrap: break-word;
-  white-space: normal;
+td{
+  word-wrap: break-word; white-space: normal; word-break: normal;
 }
-td  a{
-  word-wrap: break-word;
-  white-space: normal;
-    word-break: break-word;
+td a{
+  word-wrap: break-word; white-space: normal;  word-break: break-word;
 }
 </style>

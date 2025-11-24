@@ -65,6 +65,14 @@ const enableExternalLinkIcon = computed(
     true,
 )
 
+const showSideBar = ref(false)
+const pageWidth = ref(false)
+
+const updateLayout = (v) => {
+  showSideBar.value = v[0]
+  pageWidth.value = v[1]
+}
+
 // classes
 const containerClass = computed(() => [
   {
@@ -72,6 +80,8 @@ const containerClass = computed(() => [
     'no-sidebar': !sidebarItems.value.length,
     'sidebar-open': isSidebarOpen.value,
     'external-link-icon': enableExternalLinkIcon.value,
+    'wide-width': pageWidth.value === "wide",
+    'full-width': pageWidth.value === "full",
   },
   frontmatter.value.pageClass,
 ])
@@ -109,7 +119,7 @@ const onBeforeLeave = scrollPromise.pending
     <div class="vp-sidebar-mask" @click="toggleSidebar(false)" />
 
     <slot name="sidebar">
-      <VPSidebar>
+      <VPSidebar v-if="showSideBar">
         <template #top>
           <slot name="sidebar-top" />
         </template>
@@ -125,7 +135,7 @@ const onBeforeLeave = scrollPromise.pending
         @before-leave="onBeforeLeave"
       >
         <VPHome v-if="frontmatter.home" />
-        <VPPage v-else :key="page.path">
+        <VPPage v-else :key="page.path" @layout="updateLayout">
           <template #top>
             <slot name="page-top" />
           </template>
@@ -202,6 +212,24 @@ const onBeforeLeave = scrollPromise.pending
 
     .vp-page {
       padding-inline-start: 0;
+    }
+  }
+
+  &.wide-width {
+    [vp-content]
+    {
+      & {
+        max-width: calc(var(--sidebar-width) + var(--content-width));
+      }
+    }
+  }
+
+  &.full-width {
+    [vp-content]
+    {
+      & {
+        max-width: calc(100% - 5rem);
+      }
     }
   }
 
