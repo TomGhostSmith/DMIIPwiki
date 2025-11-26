@@ -1,56 +1,56 @@
 <template>
-    <el-dialog v-model="dialogVisible" title="文件列表" width="800">
-
-    </el-dialog>
-    <h2>页面属性</h2>
-    <el-form :model="attrs" label-width="auto" style="max-width: 600px;margin-top: 20px;">
-        <el-form-item label="页面地址">
-            <el-input :readonly="true" v-model="redirectTo"/>
-        </el-form-item>
-        <el-form-item label="页面标题">
-            <el-input :disabled="!isAdmin" v-model="attrs.title"/>
-        </el-form-item>
-        <el-form-item label="谁可以阅读">
-            <el-radio-group :disabled="!isAdmin" v-model="attrs.scope">
-                <el-radio value="public">所有人</el-radio>
-                <el-radio value="private">仅课题组成员</el-radio>
-                <el-radio value="admin">仅管理员</el-radio>
-            </el-radio-group>
-        </el-form-item>
-        <el-form-item label="谁可以编辑">
-            <el-radio-group :disabled="!isAdmin" v-model="attrs.modification">
-                <el-radio value="private">所有课题组成员</el-radio>
-                <el-radio value="admin">仅管理员</el-radio>
-            </el-radio-group>
-        </el-form-item>
-        <hr>
-        <!-- <el-form-item label="最后修改">
-            <el-input :readonly="true" v-model=""/>
-        </el-form-item> -->
-    </el-form>
-    <p>最后修改：{{ attrs.lastModify }} {{ attrs.lastModifyDate }}</p>
-    <!-- <span>Title:</span>
-    <el-input style="display: inline;margin-left: 10px;" v-model="attrs.title"/>
-    <br>
-    <span>Visible:</span>
-    <el-input style="display: inline;margin-left: 10px;" v-model="attrs.scope"/>
-    <br>
+    <div>
+        <h2>页面属性</h2>
+        <el-form :model="attrs" label-width="auto" style="max-width: 600px;margin-top: 20px;">
+            <el-form-item label="页面地址">
+                <el-input :readonly="true" v-model="redirectTo"/>
+            </el-form-item>
+            <el-form-item label="页面标题">
+                <el-input :disabled="!isAdmin" v-model="attrs.title"/>
+            </el-form-item>
+            <el-form-item label="谁可以阅读">
+                <el-radio-group :disabled="!isAdmin" v-model="attrs.scope">
+                    <el-radio value="public">所有人</el-radio>
+                    <el-radio value="private">仅课题组成员</el-radio>
+                    <el-radio value="admin">仅管理员</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item label="谁可以编辑">
+                <el-radio-group :disabled="!isAdmin" v-model="attrs.modification">
+                    <el-radio value="private">所有课题组成员</el-radio>
+                    <el-radio value="admin">仅管理员</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <hr>
+            <!-- <el-form-item label="最后修改">
+                <el-input :readonly="true" v-model=""/>
+            </el-form-item> -->
+        </el-form>
+        <p>最后修改：{{ attrs.lastModify }} {{ attrs.lastModifyDate }}</p>
+        <!-- <span>Title:</span>
+        <el-input style="display: inline;margin-left: 10px;" v-model="attrs.title"/>
+        <br>
+        <span>Visible:</span>
+        <el-input style="display: inline;margin-left: 10px;" v-model="attrs.scope"/>
+        <br>
+        
+        <span>Editable:</span>
+        <el-input style="display: inline;margin-left: 10px;" v-model="attrs.modification"/>
+        <br> -->
+        <h2>正文</h2>
+        <div id="editor" style="margin-top: 20px"></div>
+        <h2>添加文件链接</h2>
+        <!-- <el-button type="primary" @click="showFiles"  style="margin-top: 20px">上传文件</el-button> -->
+        <!-- <el-button type="primary" @click="showFiles"  style="margin-top: 20px">选择文件</el-button> -->
+        <!-- <p>还没有上传？<el-button type="text" style="display: inline; font-size: 16px;">点击此处</el-button>去上传文件</p> -->
+        <p>还没有上传？
+            <router-link to="/wiki/file.html"><el-button type="text" style="font-size: 16px;margin-top: -2px;">点击此处</el-button></router-link>
+             去上传文件</p>
+        <file-list/>
     
-    <span>Editable:</span>
-    <el-input style="display: inline;margin-left: 10px;" v-model="attrs.modification"/>
-    <br> -->
-    <h2>添加文件链接</h2>
-    <!-- <el-button type="primary" @click="showFiles"  style="margin-top: 20px">上传文件</el-button> -->
-    <!-- <el-button type="primary" @click="showFiles"  style="margin-top: 20px">选择文件</el-button> -->
-    <!-- <p>还没有上传？<el-button type="text" style="display: inline; font-size: 16px;">点击此处</el-button>去上传文件</p> -->
-    <p>还没有上传？
-        <router-link to="/wiki/file.html"><el-button type="text" style="font-size: 16px;margin-top: -2px;">点击此处</el-button></router-link>
-         去上传文件</p>
-    <file-list/>
-    <h2>正文</h2>
-    <div id="editor" style="margin-top: 20px"></div>
-    <el-button type="primary" :loading="isSaving" style="margin-top: 20px;" @click="saveContent">保存</el-button>
-    <el-button :loading="isSaving" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消</el-button>
+        <el-button type="primary" :loading="isSaving" style="margin-top: 20px;" @click="saveContent">保存</el-button>
+        <el-button :loading="isSaving" style="margin-top: 20px; margin-left: 20px;" @click="cancel">取消</el-button>
+    </div>
 </template>
 <script setup>
 import { ref, onMounted, nextTick, onBeforeUnmount, getCurrentInstance } from 'vue'

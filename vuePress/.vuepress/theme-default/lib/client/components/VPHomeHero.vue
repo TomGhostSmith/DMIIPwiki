@@ -75,7 +75,6 @@ onMounted(async () => {
         const response = await fetch('/api/getImages');
         const data = await response.json();
         let imageList = []
-        console.log(data.images);
         
         for (let i = 0;i < data.images.length;i++)
         {

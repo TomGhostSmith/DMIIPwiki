@@ -12,14 +12,14 @@ export default defineUserConfig({
   theme: defaultTheme({
     logo: 'resources/ISTBI.png',
     home: '/wiki/',
-    navbar: ['/wiki/', '/wiki/seminar', '/wiki/fileList'],
+    navbar: ['/wiki/', '/wiki/notification', '/wiki/seminar', '/wiki/fileList'],
   }),
 
   plugins: [
     searchPlugin({
       locales: {
         '/': {
-          placeholder: 'Search...',
+          placeholder: '搜索...',
         },
       },
     }),
