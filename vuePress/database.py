@@ -263,7 +263,7 @@ class Database():
     def reUploadFile(self, id, fileName, uploadDate, fileSize, md5, localPath, scope):
         if (not self.getFileByID(id)):
             return False
-        self.exec("UPDATE files SET filename = ?, uploaddate, filesize = ?, md5 = ?, localpath = ?, scope = ? WHERE id = ?", (fileName, uploadDate, fileSize, md5, localPath, scope, id))
+        self.exec("UPDATE files SET filename = ?, uploaddate = ?, filesize = ?, md5 = ?, localpath = ?, scope = ? WHERE id = ?", (fileName, uploadDate, fileSize, md5, localPath, scope, id))
         return True
     
     def deleteFile(self, id):

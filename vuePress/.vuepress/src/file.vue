@@ -246,7 +246,7 @@ const reUpload = async () => {
         }
         else if (response.status === 413)
         {
-            proxy.$message.error("目前只允许上传500MB以内的文件")
+            proxy.$message.error("目前只允许上传1GB以内的文件")
         }
         else
         {
