@@ -40,6 +40,15 @@ class Database():
                        )
                        '''
         self.exec(sql)
+        sql = '''
+                       CREATE TABLE IF NOT EXISTS status (
+                        k TEXT PRIMARY KEY,
+                        v TEXT NOT NULL
+                       )
+                       '''
+        self.exec(sql)
+        self.exec("INSERT OR IGNORE INTO status (k, v) VALUES(?, ?)", ("emailPassword", ""))
+        
         if (self.getRegister('admin') is None):
             email = "fdudmiip@163.com"
             self.addUser("admin", "admin", email)
@@ -271,5 +280,8 @@ class Database():
             return False
         self.exec("DELETE FROM files WHERE id = ?", (id, ))
         
-
-
+    def getEmailPassword(self):
+        return self.exec("SELECT FROM status WHERE k = ?", ("emailPassword", ), "one")
+    
+    def setEmailPassword(self, emailPass):
+        self.exec("UPDATE status SET v = ? WHERE k = ?", (emailPass, "emailPassword"))

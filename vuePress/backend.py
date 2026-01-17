@@ -20,7 +20,7 @@ def sendEmail(receive, subject, content):
     from email.header import Header
     smptServer = 'smtp.163.com'
     user = 'fdudmiip@163.com'
-    password = 'CYkaC37sRSGnGKwG'
+    password = db.getEmailPassword()
     sender = "fdudmiip@163.com"
 
     msg = MIMEText(content,'html','utf-8')
@@ -513,6 +513,20 @@ def serve_file(filename):
     if (cookieUserName is None):
         return jsonify({"error": "没有权限"}), 401
     return send_from_directory(f"videos", filename)
+
+@app.route("/getEmailPassword", methods=['GET'])
+def get_email_password():
+    if db.getRole(request.cookies.get("user_name")) != "admin":
+        return jsonify({"error": "没有权限"}), 401
+    return db.getEmailPassword()
+
+@app.route("/setEmailPassword", methods=['PUT'])
+def set_email_password(filename):
+    if db.getRole(request.cookies.get("user_name")) != "admin":
+        return jsonify({"error": "没有权限"}), 401
+    data = request.json
+    emailPass = data.get("emailPass")
+    return jsonify({})
 
 # @cross_origin(methods=["GET"])
 @app.route("/getScript/<path:filename>", methods=["GET"])
